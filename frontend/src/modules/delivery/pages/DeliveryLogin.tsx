@@ -1,18 +1,21 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { sendOTP, verifyOTP } from '../../../services/api/auth/deliveryAuthService';
-import OTPInput from '../../../components/OTPInput';
-import { useAuth } from '../../../context/AuthContext';
-import { removeAuthToken } from '../../../services/api/config';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  sendOTP,
+  verifyOTP,
+} from "../../../services/api/auth/deliveryAuthService";
+import OTPInput from "../../../components/OTPInput";
+import { useAuth } from "../../../context/AuthContext";
+import { removeAuthToken } from "../../../services/api/config";
 
 export default function DeliveryLogin() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [mobileNumber, setMobileNumber] = useState('');
-  const [sessionId, setSessionId] = useState('');
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [sessionId, setSessionId] = useState("");
   const [showOTP, setShowOTP] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [isNotRegistered, setIsNotRegistered] = useState(false);
 
   // Clear any existing token on mount to prevent role conflicts
@@ -24,7 +27,7 @@ export default function DeliveryLogin() {
     if (mobileNumber.length !== 10) return;
 
     setLoading(true);
-    setError('');
+    setError("");
     setIsNotRegistered(false);
 
     try {
@@ -33,16 +36,21 @@ export default function DeliveryLogin() {
         setSessionId(response.sessionId);
         setShowOTP(true);
       } else {
-        setError(response.message || 'Failed to initiate OTP');
+        setError(response.message || "Failed to initiate OTP");
       }
     } catch (err: any) {
       const status = err.response?.status;
-      const message = err.response?.data?.message || 'Failed to send OTP. Please try again.';
+      const message =
+        err.response?.data?.message || "Failed to send OTP. Please try again.";
 
       setError(message);
 
       // Check for 400 Bad Request specific to user not found (or based on message content)
-      if (status === 400 && (message.toLowerCase().includes('not found') || message.toLowerCase().includes('register'))) {
+      if (
+        status === 400 &&
+        (message.toLowerCase().includes("not found") ||
+          message.toLowerCase().includes("register"))
+      ) {
         setIsNotRegistered(true);
       }
     } finally {
@@ -52,7 +60,7 @@ export default function DeliveryLogin() {
 
   const handleOTPComplete = async (otp: string) => {
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       const response = await verifyOTP(mobileNumber, otp, sessionId);
@@ -60,19 +68,19 @@ export default function DeliveryLogin() {
         // Update auth context
         login(response.data.token, {
           ...response.data.user,
-          userType: 'Delivery'
+          userType: "Delivery",
         });
-        navigate('/delivery');
+        navigate("/delivery");
       }
     } catch (err: any) {
       // Also handle 401 Unauthorized for verify step
-      const message = err.response?.data?.message || 'Invalid OTP. Please try again.';
+      const message =
+        err.response?.data?.message || "Invalid OTP. Please try again.";
       setError(message);
     } finally {
       setLoading(false);
     }
   };
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 to-green-50 flex flex-col items-center justify-center px-4 py-8">
@@ -80,26 +88,44 @@ export default function DeliveryLogin() {
       <button
         onClick={() => navigate(-1)}
         className="absolute top-4 left-4 z-10 w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-neutral-50 transition-colors"
-        aria-label="Back"
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        aria-label="Back">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M15 18L9 12L15 6"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </button>
 
       {/* Login Card */}
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
         {/* Header Section */}
-        <div className="px-6 py-4 text-center border-b border-green-700" style={{ backgroundColor: 'rgb(21 178 74 / var(--tw-bg-opacity, 1))' }}>
+        <div
+          className="px-6 py-4 text-center border-b border-green-700"
+          style={{
+            backgroundColor: "rgb(21 178 74 / var(--tw-bg-opacity, 1))",
+          }}>
           <div className="mb-0 -mt-4">
             <img
-              src="/assets/kosil2.jpeg"
+              src="/assets/kosil1.png"
               alt="Kosil"
               className="h-44 w-full max-w-xs mx-auto object-fill object-bottom"
             />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-1 -mt-12">Delivery Login</h1>
-          <p className="text-green-50 text-sm -mt-2">Access your delivery dashboard</p>
+          <h1 className="text-2xl font-bold text-white mb-1 -mt-12">
+            Delivery Login
+          </h1>
+          <p className="text-green-50 text-sm -mt-2">
+            Access your delivery dashboard
+          </p>
         </div>
 
         {/* Login Form */}
@@ -118,7 +144,11 @@ export default function DeliveryLogin() {
                   <input
                     type="tel"
                     value={mobileNumber}
-                    onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    onChange={(e) =>
+                      setMobileNumber(
+                        e.target.value.replace(/\D/g, "").slice(0, 10)
+                      )
+                    }
                     placeholder="Enter mobile number"
                     className="flex-1 px-3 py-2.5 text-sm placeholder:text-neutral-400 focus:outline-none"
                     maxLength={10}
@@ -132,9 +162,8 @@ export default function DeliveryLogin() {
                   <span>{error}</span>
                   {isNotRegistered && (
                     <button
-                      onClick={() => navigate('/delivery/signup')}
-                      className="text-xs font-bold text-white bg-red-500 hover:bg-red-600 py-1.5 px-3 rounded self-start transition-colors"
-                    >
+                      onClick={() => navigate("/delivery/signup")}
+                      className="text-xs font-bold text-white bg-red-500 hover:bg-red-600 py-1.5 px-3 rounded self-start transition-colors">
                       Register Now
                     </button>
                   )}
@@ -144,12 +173,12 @@ export default function DeliveryLogin() {
               <button
                 onClick={handleMobileLogin}
                 disabled={mobileNumber.length !== 10 || loading}
-                className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-colors ${mobileNumber.length === 10 && !loading
-                  ? 'bg-teal-600 text-white hover:bg-teal-700 shadow-md'
-                  : 'bg-neutral-300 text-neutral-500 cursor-not-allowed'
-                  }`}
-              >
-                {loading ? 'Sending...' : 'Continue'}
+                className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-colors ${
+                  mobileNumber.length === 10 && !loading
+                    ? "bg-teal-600 text-white hover:bg-teal-700 shadow-md"
+                    : "bg-neutral-300 text-neutral-500 cursor-not-allowed"
+                }`}>
+                {loading ? "Sending..." : "Continue"}
               </button>
             </div>
           ) : (
@@ -159,7 +188,9 @@ export default function DeliveryLogin() {
                 <p className="text-sm text-neutral-600 mb-2">
                   Enter the 4-digit OTP sent to
                 </p>
-                <p className="text-sm font-semibold text-neutral-800">+91 {mobileNumber}</p>
+                <p className="text-sm font-semibold text-neutral-800">
+                  +91 {mobileNumber}
+                </p>
               </div>
 
               <OTPInput onComplete={handleOTPComplete} disabled={loading} />
@@ -174,34 +205,29 @@ export default function DeliveryLogin() {
                 <button
                   onClick={() => {
                     setShowOTP(false);
-                    setError('');
+                    setError("");
                   }}
                   disabled={loading}
-                  className="flex-1 py-2.5 rounded-lg font-semibold text-sm bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition-colors border border-neutral-300"
-                >
+                  className="flex-1 py-2.5 rounded-lg font-semibold text-sm bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition-colors border border-neutral-300">
                   Change Number
                 </button>
                 <button
                   onClick={handleMobileLogin}
                   disabled={loading}
-                  className="flex-1 py-2.5 rounded-lg font-semibold text-sm bg-teal-600 text-white hover:bg-teal-700 transition-colors"
-                >
-                  {loading ? 'Verifying...' : 'Resend OTP'}
+                  className="flex-1 py-2.5 rounded-lg font-semibold text-sm bg-teal-600 text-white hover:bg-teal-700 transition-colors">
+                  {loading ? "Verifying..." : "Resend OTP"}
                 </button>
               </div>
             </div>
           )}
 
-
-
           {/* Sign Up Link */}
           <div className="text-center pt-4 border-t border-neutral-200">
             <p className="text-sm text-neutral-600">
-              Don't have a delivery partner account?{' '}
+              Don't have a delivery partner account?{" "}
               <button
-                onClick={() => navigate('/delivery/signup')}
-                className="text-teal-600 hover:text-teal-700 font-semibold"
-              >
+                onClick={() => navigate("/delivery/signup")}
+                className="text-teal-600 hover:text-teal-700 font-semibold">
                 Sign Up
               </button>
             </p>
@@ -211,7 +237,7 @@ export default function DeliveryLogin() {
 
       {/* Footer Text */}
       <p className="mt-6 text-xs text-neutral-500 text-center max-w-md">
-        By continuing, you agree to SpeeUp's Terms of Service and Privacy Policy
+        By continuing, you agree to Kosil's Terms of Service and Privacy Policy
       </p>
     </div>
   );

@@ -112,7 +112,7 @@ const AppSettingsSchema = new Schema<IAppSettings>(
     appName: {
       type: String,
       required: [true, "App name is required"],
-      default: "SpeeUP",
+      default: "Kosil",
       trim: true,
     },
     appLogo: {

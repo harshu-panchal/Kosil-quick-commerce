@@ -14,7 +14,7 @@ async function migrateSubCategoriesToCategories() {
   try {
     // Connect to MongoDB
     const mongoUri =
-      process.env.MONGODB_URI || "mongodb://localhost:27017/speeup";
+      process.env.MONGODB_URI || "mongodb://localhost:27017/kosil";
     await mongoose.connect(mongoUri);
     console.log("Connected to MongoDB");
 

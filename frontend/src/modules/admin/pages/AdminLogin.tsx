@@ -1,13 +1,16 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { sendOTP, verifyOTP } from '../../../services/api/auth/adminAuthService';
-import OTPInput from '../../../components/OTPInput';
-import { useAuth } from '../../../context/AuthContext';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  sendOTP,
+  verifyOTP,
+} from "../../../services/api/auth/adminAuthService";
+import OTPInput from "../../../components/OTPInput";
+import { useAuth } from "../../../context/AuthContext";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [mobileNumber, setMobileNumber] = useState('');
+  const [mobileNumber, setMobileNumber] = useState("");
   const [showOTP, setShowOTP] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -51,8 +54,8 @@ export default function AdminLogin() {
     }
   };
 
-  const handleSpeeUpLogin = () => {
-    // Handle SpeeUp login logic here
+  const handleKosilLogin = () => {
+    // Handle Kosil login logic here
     navigate("/admin");
   };
 
@@ -94,7 +97,7 @@ export default function AdminLogin() {
           }}>
           <div className="mb-0 -mt-4">
             <img
-              src="/assets/kosil2.jpeg"
+              src="/assets/kosil1.png"
               alt="Kosil"
               className="h-44 w-full max-w-xs mx-auto object-fill object-bottom"
             />
@@ -145,10 +148,11 @@ export default function AdminLogin() {
               <button
                 onClick={handleMobileLogin}
                 disabled={mobileNumber.length !== 10 || loading}
-                className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-colors ${mobileNumber.length === 10 && !loading
-                  ? "bg-teal-600 text-white hover:bg-teal-700 shadow-md"
-                  : "bg-neutral-300 text-neutral-500 cursor-not-allowed"
-                  }`}>
+                className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-colors ${
+                  mobileNumber.length === 10 && !loading
+                    ? "bg-teal-600 text-white hover:bg-teal-700 shadow-md"
+                    : "bg-neutral-300 text-neutral-500 cursor-not-allowed"
+                }`}>
                 {loading ? "Sending..." : "Continue"}
               </button>
             </div>
@@ -191,16 +195,12 @@ export default function AdminLogin() {
               </div>
             </div>
           )}
-
-
-
-
         </div>
       </div>
 
       {/* Footer Text */}
       <p className="mt-6 text-xs text-neutral-500 text-center max-w-md">
-        By continuing, you agree to SpeeUp's Terms of Service and Privacy Policy
+        By continuing, you agree to Kosil's Terms of Service and Privacy Policy
       </p>
     </div>
   );

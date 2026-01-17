@@ -409,7 +409,7 @@ export default function AdminFundTransfer() {
       <div className="text-center text-sm text-neutral-500 py-4">
         Copyright © 2025. Developed By{' '}
         <a href="#" className="text-teal-600 hover:text-teal-700">
-          SpeeUp - 10 Minute App
+          Kosil - 10 Minute App
         </a>
       </div>
     </div>

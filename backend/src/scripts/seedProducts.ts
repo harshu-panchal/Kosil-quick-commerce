@@ -20,7 +20,7 @@ function log(msg: any) {
 }
 
 // --- Configuration ---
-const MONGO_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/speeup';
+const MONGO_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/kosil';
 const FRONTEND_ASSETS_PATH = path.join(__dirname, '../../../frontend/public');
 
 log('Starting Seed Script');
@@ -188,7 +188,7 @@ async function uploadToCloudinary(localPath: string, folder: string = 'products'
         }
 
         const result = await cloudinary.uploader.upload(fullPath, {
-            folder: `speeup/${folder}`,
+            folder: `kosil/${folder}`,
             use_filename: true,
             unique_filename: false,
         });

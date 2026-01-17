@@ -79,16 +79,23 @@ export default function DeliverySignUp() {
         const { latitude, longitude } = position.coords;
         try {
           const response = await fetch(
-            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
+            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${
+              import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+            }`
           );
           const data = await response.json();
           if (data.status === "OK") {
             const addressComponents = data.results[0].address_components;
-            const cityComponent = addressComponents.find((c: any) =>
-              c.types.includes("locality") || c.types.includes("administrative_area_level_2")
+            const cityComponent = addressComponents.find(
+              (c: any) =>
+                c.types.includes("locality") ||
+                c.types.includes("administrative_area_level_2")
             );
             if (cityComponent) {
-              setFormData((prev) => ({ ...prev, city: cityComponent.long_name }));
+              setFormData((prev) => ({
+                ...prev,
+                city: cityComponent.long_name,
+              }));
             }
           } else {
             setError("Could not fetch city from your location");
@@ -106,7 +113,7 @@ export default function DeliverySignUp() {
       {
         enableHighAccuracy: true,
         timeout: 20000,
-        maximumAge: 0
+        maximumAge: 0,
       }
     );
   };
@@ -170,7 +177,7 @@ export default function DeliverySignUp() {
         if (drivingLicenseFile) {
           const drivingLicenseResult = await uploadDocument(
             drivingLicenseFile,
-            "speeup/delivery/documents"
+            "kosil/delivery/documents"
           );
           drivingLicenseUrl = drivingLicenseResult.secureUrl;
         }
@@ -178,7 +185,7 @@ export default function DeliverySignUp() {
         if (nationalIdentityCardFile) {
           const nationalIdResult = await uploadDocument(
             nationalIdentityCardFile,
-            "speeup/delivery/documents"
+            "kosil/delivery/documents"
           );
           nationalIdentityCardUrl = nationalIdResult.secureUrl;
         }
@@ -215,15 +222,12 @@ export default function DeliverySignUp() {
           setShowOTP(true);
         } catch (otpErr: any) {
           setError(
-            otpErr.message ||
-            "Registration successful but failed to send OTP."
+            otpErr.message || "Registration successful but failed to send OTP."
           );
         }
       }
     } catch (err: any) {
-      setError(
-        err.message || "Registration failed. Please try again."
-      );
+      setError(err.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -279,7 +283,7 @@ export default function DeliverySignUp() {
           }}>
           <div className="mb-0 -mt-4">
             <img
-              src="/assets/kosil2.jpeg"
+              src="/assets/kosil1.png"
               alt="Kosil"
               className="h-44 w-full max-w-xs mx-auto object-fill object-bottom"
             />
@@ -435,12 +439,17 @@ export default function DeliverySignUp() {
                       onClick={fetchCityFromLocation}
                       disabled={isCityLoading || loading}
                       className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-teal-600 hover:bg-teal-50 rounded-md transition-colors disabled:text-neutral-400"
-                      title="Fetch current location"
-                    >
+                      title="Fetch current location">
                       {isCityLoading ? (
                         <div className="w-4 h-4 border-2 border-teal-600 border-t-transparent rounded-full animate-spin"></div>
                       ) : (
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2">
                           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                           <circle cx="12" cy="10" r="3" />
                         </svg>
@@ -610,15 +619,16 @@ export default function DeliverySignUp() {
               <button
                 type="submit"
                 disabled={loading || uploadingDocs}
-                className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-colors ${!loading && !uploadingDocs
-                  ? "bg-teal-600 text-white hover:bg-teal-700 shadow-md"
-                  : "bg-neutral-300 text-neutral-500 cursor-not-allowed"
-                  }`}>
+                className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-colors ${
+                  !loading && !uploadingDocs
+                    ? "bg-teal-600 text-white hover:bg-teal-700 shadow-md"
+                    : "bg-neutral-300 text-neutral-500 cursor-not-allowed"
+                }`}>
                 {uploadingDocs
                   ? "Uploading Documents..."
                   : loading
-                    ? "Creating Account..."
-                    : "Sign Up"}
+                  ? "Creating Account..."
+                  : "Sign Up"}
               </button>
 
               {/* Login Link */}
@@ -672,9 +682,7 @@ export default function DeliverySignUp() {
                       const res = await sendOTP(formData.mobile);
                       if (res.sessionId) setSessionId(res.sessionId);
                     } catch (err: any) {
-                      setError(
-                        err.message || "Failed to resend OTP."
-                      );
+                      setError(err.message || "Failed to resend OTP.");
                     } finally {
                       setLoading(false);
                     }
@@ -691,7 +699,7 @@ export default function DeliverySignUp() {
 
       {/* Footer Text */}
       <p className="mt-6 text-xs text-neutral-500 text-center max-w-md">
-        By continuing, you agree to SpeeUp's Terms of Service and Privacy Policy
+        By continuing, you agree to Kosil's Terms of Service and Privacy Policy
       </p>
     </div>
   );

@@ -262,7 +262,7 @@ export default function SellerSignUp() {
           }}>
           <div className="mb-0 -mt-4">
             <img
-              src="/assets/kosil2.jpeg"
+              src="/assets/kosil1.png"
               alt="Kosil"
               className="h-44 w-full max-w-xs mx-auto object-fill object-bottom"
             />

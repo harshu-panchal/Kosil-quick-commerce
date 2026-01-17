@@ -29,10 +29,11 @@ export const isOriginAllowed = (origin: string | undefined): boolean => {
       .map((url) => url.trim().replace(/\/$/, '')) // Remove trailing slashes
       .filter((url) => url.length > 0);
 
-    // Default production origins (explicitly include www.speeup.com)
+    // Default production origins (explicitly include www.kosil.com)
     const defaultOrigins = [
-      'https://www.speeup.com',
-      'https://speeup.com',
+      'https://www.kosil.com',
+      'https://kosil.com',
+      'https://kosil-frontend.onrender.com',
     ];
 
     // Combine and remove duplicates

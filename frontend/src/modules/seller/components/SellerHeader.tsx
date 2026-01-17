@@ -106,7 +106,7 @@ export default function SellerHeader({
               </svg>
             )}
           </button>
-          {/* SpeeUp Logo */}
+          {/* Kosil Logo */}
           <button
             onClick={handleLogoClick}
             className="hover:opacity-80 transition-opacity">

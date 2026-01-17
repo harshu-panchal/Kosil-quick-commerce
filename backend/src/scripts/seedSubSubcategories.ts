@@ -16,7 +16,7 @@ function log(msg: any) {
 }
 
 // --- Configuration ---
-const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/speeup";
+const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/kosil";
 const FRONTEND_ASSETS_PATH = path.join(__dirname, "../../../frontend/assets");
 const PRODUCT_IMAGES_PATH = path.join(
   FRONTEND_ASSETS_PATH,

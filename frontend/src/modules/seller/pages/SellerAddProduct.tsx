@@ -82,7 +82,9 @@ export default function SellerAddProduct() {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<SubCategory[]>([]);
-  const [subSubCategories, setSubSubCategories] = useState<SubSubCategory[]>([]);
+  const [subSubCategories, setSubSubCategories] = useState<SubSubCategory[]>(
+    []
+  );
   const [taxes, setTaxes] = useState<Tax[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [headerCategories, setHeaderCategories] = useState<HeaderCategory[]>(
@@ -134,7 +136,10 @@ export default function SellerAddProduct() {
           setShops(results[4].value.data);
         } else if (results[4].status === "rejected") {
           // Shops API failed - this is non-critical, log and continue
-          console.warn("Failed to fetch shops (Shop By Store feature may be unavailable):", results[4].reason?.message || "Unknown error");
+          console.warn(
+            "Failed to fetch shops (Shop By Store feature may be unavailable):",
+            results[4].reason?.message || "Unknown error"
+          );
         }
       } catch (err) {
         console.error("Error fetching form data:", err);
@@ -187,8 +192,11 @@ export default function SellerAddProduct() {
                 product.totalAllowedQuantity?.toString() || "10",
               mainImageUrl: product.mainImageUrl || product.mainImage || "",
               galleryImageUrls: product.galleryImageUrls || [],
-              isShopByStoreOnly: (product as any).isShopByStoreOnly ? "Yes" : "No",
-              shopId: (product as any).shopId?._id || (product as any).shopId || "",
+              isShopByStoreOnly: (product as any).isShopByStoreOnly
+                ? "Yes"
+                : "No",
+              shopId:
+                (product as any).shopId?._id || (product as any).shopId || "",
             });
             setVariations(product.variations);
             if (product.mainImageUrl || product.mainImage) {
@@ -421,7 +429,7 @@ export default function SellerAddProduct() {
       if (mainImageFile) {
         const mainImageResult = await uploadImage(
           mainImageFile,
-          "speeup/products"
+          "kosil/products"
         );
         mainImageUrl = mainImageResult.secureUrl;
         setFormData((prev) => ({
@@ -434,7 +442,7 @@ export default function SellerAddProduct() {
       if (galleryImageFiles.length > 0) {
         const galleryResults = await uploadImages(
           galleryImageFiles,
-          "speeup/products/gallery"
+          "kosil/products/gallery"
         );
         galleryImageUrls = galleryResults.map((result) => result.secureUrl);
         setFormData((prev) => ({ ...prev, galleryImageUrls }));
@@ -485,7 +493,10 @@ export default function SellerAddProduct() {
         variations: variations,
         variationType: formData.variationType || undefined,
         isShopByStoreOnly: formData.isShopByStoreOnly === "Yes",
-        shopId: formData.isShopByStoreOnly === "Yes" && formData.shopId ? formData.shopId : undefined,
+        shopId:
+          formData.isShopByStoreOnly === "Yes" && formData.shopId
+            ? formData.shopId
+            : undefined,
       };
 
       // Create or Update product via API
@@ -1265,7 +1276,10 @@ export default function SellerAddProduct() {
             <div className="p-4 sm:p-6 space-y-4">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800">
-                  <strong>Note:</strong> If you select "Show in Shop by Store only", this product will only be visible in the Shop by Store section and will not appear on category pages, home page, or any other pages.
+                  <strong>Note:</strong> If you select "Show in Shop by Store
+                  only", this product will only be visible in the Shop by Store
+                  section and will not appear on category pages, home page, or
+                  any other pages.
                 </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1302,7 +1316,8 @@ export default function SellerAddProduct() {
                     </select>
                     {shops.length === 0 && (
                       <p className="text-xs text-neutral-500 mt-1">
-                        No active stores available. Please contact admin to create stores.
+                        No active stores available. Please contact admin to
+                        create stores.
                       </p>
                     )}
                   </div>

@@ -23,7 +23,7 @@ function log(msg: any) {
 }
 
 // --- Configuration ---
-const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/speeup";
+const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/kosil";
 const SELLER_MOBILE = "7999267233";
 
 // Product data for each subcategory

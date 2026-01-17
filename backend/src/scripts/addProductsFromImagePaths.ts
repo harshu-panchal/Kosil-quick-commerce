@@ -20,7 +20,7 @@ function log(msg: any) {
 }
 
 // --- Configuration ---
-const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/speeup";
+const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/kosil";
 const FRONTEND_ASSETS_PATH = path.join(__dirname, "../../../frontend/assets");
 const SELLER_MOBILE = "6268423925";
 
@@ -60,11 +60,15 @@ function parseImagePath(imagePath: string): {
     throw new Error(`Invalid path format: ${imagePath}`);
   }
 
-  const relativePath = normalizedPath.substring(productIndex + "product/product/".length);
+  const relativePath = normalizedPath.substring(
+    productIndex + "product/product/".length
+  );
   const parts = relativePath.split("/");
 
   if (parts.length < 3) {
-    throw new Error(`Invalid path structure. Expected: Category/Subcategory/Product/Image, got: ${relativePath}`);
+    throw new Error(
+      `Invalid path structure. Expected: Category/Subcategory/Product/Image, got: ${relativePath}`
+    );
   }
 
   const categoryName = parts[0];
@@ -87,7 +91,10 @@ function parseImagePath(imagePath: string): {
 async function findOrCreateCategoryHierarchy(
   categoryName: string,
   subcategoryName: string
-): Promise<{ categoryId: mongoose.Types.ObjectId; subcategoryId: mongoose.Types.ObjectId }> {
+): Promise<{
+  categoryId: mongoose.Types.ObjectId;
+  subcategoryId: mongoose.Types.ObjectId;
+}> {
   // Find root category
   let rootCategory = await Category.findOne({
     name: { $regex: new RegExp(`^${categoryName}$`, "i") },
@@ -119,7 +126,9 @@ async function findOrCreateCategoryHierarchy(
   });
 
   if (!subcategory) {
-    log(`⚠️  Subcategory "${subcategoryName}" not found under "${categoryName}". Creating it...`);
+    log(
+      `⚠️  Subcategory "${subcategoryName}" not found under "${categoryName}". Creating it...`
+    );
     subcategory = await Category.create({
       name: subcategoryName,
       parentId: rootCategory._id,
@@ -156,7 +165,7 @@ async function uploadToCloudinary(
 
   try {
     const result = await cloudinary.uploader.upload(localPath, {
-      folder: `speeup/${folder}`,
+      folder: `kosil/${folder}`,
       resource_type: "image",
       use_filename: true,
       unique_filename: false,
@@ -180,7 +189,10 @@ function generatePrice(_productName: string, categoryName: string): number {
   };
 
   const priceRange = categoryPrices[categoryName] || { min: 50, max: 500 };
-  return Math.floor(Math.random() * (priceRange.max - priceRange.min + 1)) + priceRange.min;
+  return (
+    Math.floor(Math.random() * (priceRange.max - priceRange.min + 1)) +
+    priceRange.min
+  );
 }
 
 // Generate SKU from product name
@@ -287,7 +299,9 @@ async function addProducts() {
           requiresApproval: false,
           rating: 0,
           reviewsCount: 0,
-          discount: Math.floor(((compareAtPrice - price) / compareAtPrice) * 100),
+          discount: Math.floor(
+            ((compareAtPrice - price) / compareAtPrice) * 100
+          ),
         });
 
         log(`✅ Created product: ${product.productName}`);
@@ -340,4 +354,3 @@ if (require.main === module) {
 }
 
 export default addProducts;
-

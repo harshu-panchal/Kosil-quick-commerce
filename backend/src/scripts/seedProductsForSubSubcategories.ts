@@ -22,7 +22,7 @@ function log(msg: any) {
 }
 
 // --- Configuration ---
-const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/speeup";
+const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/kosil";
 const FRONTEND_ASSETS_PATH = path.join(__dirname, "../../../frontend/assets");
 const PRODUCT_IMAGES_PATH = path.join(
   FRONTEND_ASSETS_PATH,
@@ -196,9 +196,7 @@ function findProductImage(
   }
 
   for (const ext of imageExtensions) {
-    const imageFiles = files.filter((f) =>
-      f.toLowerCase().endsWith(ext)
-    );
+    const imageFiles = files.filter((f) => f.toLowerCase().endsWith(ext));
     if (imageFiles.length > 0) {
       const matchingFile = imageFiles.find((f) =>
         normalizeString(f).includes(normalizeString(productFolder))
@@ -230,7 +228,7 @@ async function uploadToCloudinary(
 
   try {
     const result = await cloudinary.uploader.upload(localPath, {
-      folder: `speeup/${folder}`,
+      folder: `kosil/${folder}`,
       resource_type: "image",
       use_filename: true,
       unique_filename: false,
@@ -271,14 +269,13 @@ async function seedProducts() {
     const SELLER_MOBILE = "8260521733";
 
     let seller = await Seller.findOne({
-      $or: [
-        { _id: SELLER_ID },
-        { mobile: SELLER_MOBILE },
-      ],
+      $or: [{ _id: SELLER_ID }, { mobile: SELLER_MOBILE }],
     });
 
     if (!seller) {
-      log(`❌ Seller not found with ID: ${SELLER_ID} or mobile: ${SELLER_MOBILE}`);
+      log(
+        `❌ Seller not found with ID: ${SELLER_ID} or mobile: ${SELLER_MOBILE}`
+      );
       log("Please ensure the seller exists in the database.");
       process.exit(1);
     }
@@ -441,17 +438,25 @@ async function seedProducts() {
             rating: parseFloat((Math.random() * 2 + 3).toFixed(1)), // Random rating 3.0-5.0
             reviewsCount: Math.floor(Math.random() * 100),
             discount: discount,
-            tags: [subSubcat.categoryName, subSubcat.subcategoryName, subSubcat.name],
+            tags: [
+              subSubcat.categoryName,
+              subSubcat.subcategoryName,
+              subSubcat.name,
+            ],
             requiresApproval: false,
             isReturnable: true,
             maxReturnDays: 7,
           });
 
           log(`  ✅ Created product: ${productFolder}`);
-          log(`     Price: ₹${basePrice} | MRP: ₹${compareAtPrice} | Discount: ${discount}%`);
+          log(
+            `     Price: ₹${basePrice} | MRP: ₹${compareAtPrice} | Discount: ${discount}%`
+          );
           totalCreated++;
         } catch (error: any) {
-          log(`  ❌ Error creating product "${productFolder}": ${error.message}`);
+          log(
+            `  ❌ Error creating product "${productFolder}": ${error.message}`
+          );
           totalErrors++;
         }
       }
@@ -473,4 +478,3 @@ async function seedProducts() {
 }
 
 seedProducts();
-

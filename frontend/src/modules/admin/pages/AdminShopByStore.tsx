@@ -4,13 +4,22 @@ import {
   validateImageFile,
   createImagePreview,
 } from "../../../utils/imageUpload";
-import { getProducts, getCategories, getBrands, getSellers, Product, Category, Brand, Seller } from "../../../services/api/admin/adminProductService";
+import {
+  getProducts,
+  getCategories,
+  getBrands,
+  getSellers,
+  Product,
+  Category,
+  Brand,
+  Seller,
+} from "../../../services/api/admin/adminProductService";
 import {
   getShopByStores,
   createShopByStore,
   updateShopByStore,
   deleteShopByStore,
-  ShopByStore
+  ShopByStore,
 } from "../../../services/api/admin/adminMiscService";
 
 // Using ShopByStore from API service instead of local interface
@@ -124,8 +133,6 @@ export default function AdminShopByStore() {
     }
   };
 
-
-
   const fetchStores = async () => {
     setLoadingStores(true);
     try {
@@ -141,7 +148,6 @@ export default function AdminShopByStore() {
     }
   };
 
-
   const handleSort = (column: string) => {
     if (sortColumn === column) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -154,7 +160,8 @@ export default function AdminShopByStore() {
   const filteredStores = stores.filter(
     (store) =>
       store.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (store.storeId && store.storeId.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (store.storeId &&
+        store.storeId.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (store._id && store._id.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
@@ -210,9 +217,9 @@ export default function AdminShopByStore() {
   };
 
   const toggleProductSelection = (productId: string) => {
-    setSelectedProductIds(prev =>
+    setSelectedProductIds((prev) =>
       prev.includes(productId)
-        ? prev.filter(id => id !== productId)
+        ? prev.filter((id) => id !== productId)
         : [...prev, productId]
     );
   };
@@ -231,7 +238,7 @@ export default function AdminShopByStore() {
 
       // Upload store image if provided
       if (storeImageFile) {
-        const imageResult = await uploadImage(storeImageFile, "speeup/stores");
+        const imageResult = await uploadImage(storeImageFile, "kosil/stores");
         imageUrl = imageResult.secureUrl;
       } else if (editingId && !storeImagePreview) {
         // If editing and no new image and no preview, we need at least one image
@@ -242,7 +249,11 @@ export default function AdminShopByStore() {
 
       const storeData = {
         name: storeName.trim(),
-        image: imageUrl || (editingId ? stores.find(s => s._id === editingId)?.image || "" : ""),
+        image:
+          imageUrl ||
+          (editingId
+            ? stores.find((s) => s._id === editingId)?.image || ""
+            : ""),
         description: "",
         products: selectedProductIds,
         order: stores.length,
@@ -283,8 +294,8 @@ export default function AdminShopByStore() {
     } catch (error: any) {
       setUploadError(
         error.response?.data?.message ||
-        error.message ||
-        "Failed to save store. Please try again."
+          error.message ||
+          "Failed to save store. Please try again."
       );
     } finally {
       setUploading(false);
@@ -326,7 +337,10 @@ export default function AdminShopByStore() {
           setUploadError("Failed to delete store. Please try again.");
         }
       } catch (error: any) {
-        setUploadError(error.response?.data?.message || "Failed to delete store. Please try again.");
+        setUploadError(
+          error.response?.data?.message ||
+            "Failed to delete store. Please try again."
+        );
       }
     }
   };
@@ -337,78 +351,97 @@ export default function AdminShopByStore() {
 
     // Apply search filter
     if (productSearchTerm) {
-      filtered = filtered.filter(p =>
+      filtered = filtered.filter((p) =>
         p.productName.toLowerCase().includes(productSearchTerm.toLowerCase())
       );
     }
 
     // Apply category filter
     if (filterCategory) {
-      filtered = filtered.filter(p => {
-        const catId = typeof p.category === 'string' ? p.category : (p.category as any)?._id;
+      filtered = filtered.filter((p) => {
+        const catId =
+          typeof p.category === "string"
+            ? p.category
+            : (p.category as any)?._id;
         return catId === filterCategory;
       });
     }
 
     // Apply subcategory filter
     if (filterSubcategory) {
-      filtered = filtered.filter(p => {
+      filtered = filtered.filter((p) => {
         if (!p.subcategory) return false;
-        const subId = typeof p.subcategory === 'string' ? p.subcategory : (p.subcategory as any)?._id;
+        const subId =
+          typeof p.subcategory === "string"
+            ? p.subcategory
+            : (p.subcategory as any)?._id;
         return subId === filterSubcategory;
       });
     }
 
     // Apply brand filter
     if (filterBrand) {
-      filtered = filtered.filter(p => {
+      filtered = filtered.filter((p) => {
         if (!p.brand) return false;
-        const brandId = typeof p.brand === 'string' ? p.brand : (p.brand as any)?._id;
+        const brandId =
+          typeof p.brand === "string" ? p.brand : (p.brand as any)?._id;
         return brandId === filterBrand;
       });
     }
 
     // Apply seller filter
     if (filterSeller) {
-      filtered = filtered.filter(p => {
-        const sellerId = typeof p.seller === 'string' ? p.seller : (p.seller as any)?._id;
+      filtered = filtered.filter((p) => {
+        const sellerId =
+          typeof p.seller === "string" ? p.seller : (p.seller as any)?._id;
         return sellerId === filterSeller;
       });
     }
 
     // Apply status filter
     if (filterStatus) {
-      filtered = filtered.filter(p => p.status === filterStatus);
+      filtered = filtered.filter((p) => p.status === filterStatus);
     }
 
     // Apply price filters
     if (filterMinPrice) {
       const minPrice = parseFloat(filterMinPrice);
       if (!isNaN(minPrice)) {
-        filtered = filtered.filter(p => p.price >= minPrice);
+        filtered = filtered.filter((p) => p.price >= minPrice);
       }
     }
 
     if (filterMaxPrice) {
       const maxPrice = parseFloat(filterMaxPrice);
       if (!isNaN(maxPrice)) {
-        filtered = filtered.filter(p => p.price <= maxPrice);
+        filtered = filtered.filter((p) => p.price <= maxPrice);
       }
     }
 
     setProducts(filtered);
-  }, [allProducts, productSearchTerm, filterCategory, filterSubcategory, filterBrand, filterSeller, filterStatus, filterMinPrice, filterMaxPrice]);
+  }, [
+    allProducts,
+    productSearchTerm,
+    filterCategory,
+    filterSubcategory,
+    filterBrand,
+    filterSeller,
+    filterStatus,
+    filterMinPrice,
+    filterMaxPrice,
+  ]);
 
   // Get subcategories for selected category
   const getSubcategoriesForCategory = () => {
     if (!filterCategory) return [];
-    const category = categories.find(c => c._id === filterCategory);
+    const category = categories.find((c) => c._id === filterCategory);
     if (!category) return [];
 
     // Get all subcategories that belong to this category
     // Subcategories are categories with parentId matching the selected category
-    return categories.filter(c => {
-      const parentId = typeof c.parentId === 'string' ? c.parentId : (c.parentId as any)?._id;
+    return categories.filter((c) => {
+      const parentId =
+        typeof c.parentId === "string" ? c.parentId : (c.parentId as any)?._id;
       return parentId === filterCategory;
     });
   };
@@ -430,8 +463,6 @@ export default function AdminShopByStore() {
     setFilterMinPrice("");
     setFilterMaxPrice("");
   };
-
-
 
   const handleExport = () => {
     setUploadError("Export functionality will be implemented soon.");
@@ -461,7 +492,6 @@ export default function AdminShopByStore() {
             </h2>
           </div>
           <div className="p-4 sm:p-6 space-y-4">
-
             {/* Store Name */}
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">
@@ -476,8 +506,6 @@ export default function AdminShopByStore() {
               />
             </div>
 
-
-
             {/* Product Selection */}
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">
@@ -487,7 +515,9 @@ export default function AdminShopByStore() {
 
               {/* Filters Section */}
               <div className="mb-3 space-y-2 p-3 bg-neutral-50 rounded-md border border-neutral-200">
-                <div className="text-xs font-semibold text-neutral-600 mb-2">Filters:</div>
+                <div className="text-xs font-semibold text-neutral-600 mb-2">
+                  Filters:
+                </div>
 
                 {/* Search */}
                 <input
@@ -506,22 +536,22 @@ export default function AdminShopByStore() {
                       setFilterCategory(e.target.value);
                       setFilterSubcategory(""); // Reset subcategory when category changes
                     }}
-                    className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer bg-white"
-                  >
+                    className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer bg-white">
                     <option value="">All Categories</option>
-                    {categories.filter(c => !c.parentId).map((cat) => (
-                      <option key={cat._id} value={cat._id}>
-                        {cat.name}
-                      </option>
-                    ))}
+                    {categories
+                      .filter((c) => !c.parentId)
+                      .map((cat) => (
+                        <option key={cat._id} value={cat._id}>
+                          {cat.name}
+                        </option>
+                      ))}
                   </select>
 
                   <select
                     value={filterSubcategory}
                     onChange={(e) => setFilterSubcategory(e.target.value)}
                     disabled={!filterCategory}
-                    className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer bg-white disabled:bg-neutral-100 disabled:cursor-not-allowed"
-                  >
+                    className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer bg-white disabled:bg-neutral-100 disabled:cursor-not-allowed">
                     <option value="">All Subcategories</option>
                     {getSubcategoriesForCategory().map((sub) => (
                       <option key={sub._id} value={sub._id}>
@@ -536,8 +566,7 @@ export default function AdminShopByStore() {
                   <select
                     value={filterBrand}
                     onChange={(e) => setFilterBrand(e.target.value)}
-                    className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer bg-white"
-                  >
+                    className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer bg-white">
                     <option value="">All Brands</option>
                     {brands.map((brand) => (
                       <option key={brand._id} value={brand._id}>
@@ -549,8 +578,7 @@ export default function AdminShopByStore() {
                   <select
                     value={filterSeller}
                     onChange={(e) => setFilterSeller(e.target.value)}
-                    className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer bg-white"
-                  >
+                    className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer bg-white">
                     <option value="">All Sellers</option>
                     {sellers.map((seller) => (
                       <option key={seller._id} value={seller._id}>
@@ -565,8 +593,7 @@ export default function AdminShopByStore() {
                   <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer bg-white"
-                  >
+                    className="w-full px-2 py-1.5 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer bg-white">
                     <option value="">All Status</option>
                     <option value="Active">Active</option>
                     <option value="Inactive">Inactive</option>
@@ -592,7 +619,13 @@ export default function AdminShopByStore() {
                 </div>
 
                 {/* Clear Filters Button */}
-                {(filterCategory || filterSubcategory || filterBrand || filterSeller || filterStatus !== "Active" || filterMinPrice || filterMaxPrice) && (
+                {(filterCategory ||
+                  filterSubcategory ||
+                  filterBrand ||
+                  filterSeller ||
+                  filterStatus !== "Active" ||
+                  filterMinPrice ||
+                  filterMaxPrice) && (
                   <button
                     type="button"
                     onClick={() => {
@@ -604,8 +637,7 @@ export default function AdminShopByStore() {
                       setFilterMinPrice("");
                       setFilterMaxPrice("");
                     }}
-                    className="w-full px-3 py-1.5 text-xs bg-neutral-200 hover:bg-neutral-300 text-neutral-700 rounded transition-colors"
-                  >
+                    className="w-full px-3 py-1.5 text-xs bg-neutral-200 hover:bg-neutral-300 text-neutral-700 rounded transition-colors">
                     Clear Filters
                   </button>
                 )}
@@ -620,7 +652,9 @@ export default function AdminShopByStore() {
                 ) : products.length > 0 ? (
                   <>
                     {products.map((product) => (
-                      <div key={product._id} className="flex items-center mb-2 hover:bg-neutral-100 p-1 rounded">
+                      <div
+                        key={product._id}
+                        className="flex items-center mb-2 hover:bg-neutral-100 p-1 rounded">
                         <input
                           type="checkbox"
                           id={`prod-${product._id}`}
@@ -628,7 +662,9 @@ export default function AdminShopByStore() {
                           onChange={() => toggleProductSelection(product._id)}
                           className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded cursor-pointer"
                         />
-                        <label htmlFor={`prod-${product._id}`} className="ml-2 block text-sm text-gray-900 truncate cursor-pointer flex-1">
+                        <label
+                          htmlFor={`prod-${product._id}`}
+                          className="ml-2 block text-sm text-gray-900 truncate cursor-pointer flex-1">
                           {product.productName}
                         </label>
                       </div>
@@ -648,8 +684,7 @@ export default function AdminShopByStore() {
                 <button
                   onClick={() => setUploadError("")}
                   className="text-red-700 hover:text-red-900 ml-4 text-lg font-bold"
-                  type="button"
-                >
+                  type="button">
                   ×
                 </button>
               </div>
@@ -660,8 +695,7 @@ export default function AdminShopByStore() {
                 <button
                   onClick={() => setSuccessMessage("")}
                   className="text-green-700 hover:text-green-900 ml-4 text-lg font-bold"
-                  type="button"
-                >
+                  type="button">
                   ×
                 </button>
               </div>
@@ -726,15 +760,16 @@ export default function AdminShopByStore() {
               <button
                 onClick={handleAddStore}
                 disabled={uploading}
-                className={`flex-1 py-2.5 rounded text-sm font-medium transition-colors ${uploading
-                  ? "bg-neutral-400 cursor-not-allowed text-white"
-                  : "bg-teal-600 hover:bg-teal-700 text-white"
-                  }`}>
+                className={`flex-1 py-2.5 rounded text-sm font-medium transition-colors ${
+                  uploading
+                    ? "bg-neutral-400 cursor-not-allowed text-white"
+                    : "bg-teal-600 hover:bg-teal-700 text-white"
+                }`}>
                 {uploading
                   ? "Uploading..."
                   : editingId
-                    ? "Update Store"
-                    : "Create Store"}
+                  ? "Update Store"
+                  : "Create Store"}
               </button>
               {editingId && (
                 <button
@@ -973,10 +1008,11 @@ export default function AdminShopByStore() {
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className={`p-2 border border-neutral-300 rounded ${currentPage === 1
-                  ? "text-neutral-400 cursor-not-allowed bg-neutral-50"
-                  : "text-neutral-700 hover:bg-neutral-50"
-                  }`}
+                className={`p-2 border border-neutral-300 rounded ${
+                  currentPage === 1
+                    ? "text-neutral-400 cursor-not-allowed bg-neutral-50"
+                    : "text-neutral-700 hover:bg-neutral-50"
+                }`}
                 aria-label="Previous page">
                 <svg
                   width="16"
@@ -998,10 +1034,11 @@ export default function AdminShopByStore() {
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-1 border border-neutral-300 rounded text-sm ${currentPage === page
-                      ? "bg-teal-600 text-white border-teal-600"
-                      : "text-neutral-700 hover:bg-neutral-50"
-                      }`}>
+                    className={`px-3 py-1 border border-neutral-300 rounded text-sm ${
+                      currentPage === page
+                        ? "bg-teal-600 text-white border-teal-600"
+                        : "text-neutral-700 hover:bg-neutral-50"
+                    }`}>
                     {page}
                   </button>
                 )
@@ -1011,10 +1048,11 @@ export default function AdminShopByStore() {
                   setCurrentPage((prev) => Math.min(totalPages, prev + 1))
                 }
                 disabled={currentPage === totalPages || totalPages === 0}
-                className={`p-2 border border-neutral-300 rounded ${currentPage === totalPages || totalPages === 0
-                  ? "text-neutral-400 cursor-not-allowed bg-neutral-50"
-                  : "text-neutral-700 hover:bg-neutral-50"
-                  }`}
+                className={`p-2 border border-neutral-300 rounded ${
+                  currentPage === totalPages || totalPages === 0
+                    ? "text-neutral-400 cursor-not-allowed bg-neutral-50"
+                    : "text-neutral-700 hover:bg-neutral-50"
+                }`}
                 aria-label="Next page">
                 <svg
                   width="16"
@@ -1040,7 +1078,7 @@ export default function AdminShopByStore() {
       <div className="text-center text-sm text-neutral-500 py-4">
         Copyright © 2025. Developed By{" "}
         <a href="#" className="text-teal-600 hover:text-teal-700">
-          SpeeUp - 10 Minute App
+          Kosil - 10 Minute App
         </a>
       </div>
     </div>

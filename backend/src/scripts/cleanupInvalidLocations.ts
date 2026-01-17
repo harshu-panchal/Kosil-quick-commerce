@@ -12,7 +12,7 @@ dotenv.config();
 async function cleanupInvalidLocations() {
   try {
     // Connect to MongoDB
-    const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/speeup';
+    const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/kosil';
     await mongoose.connect(mongoUri);
     console.log('✓ Connected to MongoDB');
 

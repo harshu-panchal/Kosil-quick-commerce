@@ -333,7 +333,7 @@ export default function CategoryFormModal({
       // Upload image if a new file is selected
       if (imageFile) {
         setUploading(true);
-        const imageResult = await uploadImage(imageFile, "speeup/categories");
+        const imageResult = await uploadImage(imageFile, "kosil/categories");
         imageUrl = imageResult.secureUrl;
         setUploading(false);
       }
