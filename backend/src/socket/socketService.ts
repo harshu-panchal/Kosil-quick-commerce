@@ -54,8 +54,9 @@ export const initializeSocket = (httpServer: HttpServer) => {
 
                     // Default production origins if FRONTEND_URL not set
                     const defaultOrigins = [
-                        "https://www.speeup.com",
-                        "https://speeup.com",
+                        "https://www.kosil.com",
+                        "https://kosil.com",
+                        "https://kosil-frontend.onrender.com",
                     ];
 
                     const allAllowedOrigins = allowedOrigins.length > 0

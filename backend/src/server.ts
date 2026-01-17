@@ -18,8 +18,9 @@ const httpServer = createServer(app);
 
 // Simple CORS configuration - Standard and reliable
 const allowedOrigins = [
-  "https://www.speeup.com",
-  "https://speeup.com",
+  "https://www.kosil.com",
+  "https://kosil.com",
+  "https://kosil-frontend.onrender.com",
   // Add more origins from environment variable if needed
   ...(process.env.FRONTEND_URL
     ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
