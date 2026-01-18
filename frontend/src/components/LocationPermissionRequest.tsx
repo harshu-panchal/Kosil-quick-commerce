@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useLocation } from '../hooks/useLocation';
-import GoogleMapsAutocomplete from './GoogleMapsAutocomplete';
+import { useState, useEffect, useCallback } from "react";
+import { useLocation } from "../hooks/useLocation";
+import GoogleMapsAutocomplete from "./GoogleMapsAutocomplete";
 
 interface LocationPermissionRequestProps {
   onLocationGranted: () => void;
@@ -12,26 +12,36 @@ interface LocationPermissionRequestProps {
 export default function LocationPermissionRequest({
   onLocationGranted,
   skipable = false,
-  title = 'Location Access Required',
-  description = 'We need your location to show you products available near you and enable delivery services.',
+  title = "Location Access Required",
+  description = "We need your location to show you products available near you and enable delivery services.",
 }: LocationPermissionRequestProps) {
-  const { requestLocation, updateLocation, isLocationEnabled, isLocationLoading, locationError, locationPermissionStatus, clearLocation } = useLocation();
+  const {
+    requestLocation,
+    updateLocation,
+    isLocationEnabled,
+    isLocationLoading,
+    locationError,
+    locationPermissionStatus,
+    clearLocation,
+  } = useLocation();
   const [showManualInput, setShowManualInput] = useState(false);
-  const [manualAddress, setManualAddress] = useState('');
+  const [manualAddress, setManualAddress] = useState("");
   const [manualLat, setManualLat] = useState(0);
   const [manualLng, setManualLng] = useState(0);
 
   // Auto-grant if already enabled or session permission exists
   useEffect(() => {
     if (isLocationEnabled) {
-      console.log('[LocationPermissionRequest] Location is enabled, notifying parent.');
+      console.log(
+        "[LocationPermissionRequest] Location is enabled, notifying parent.",
+      );
       onLocationGranted();
     }
   }, [isLocationEnabled, onLocationGranted]);
 
   const handleAllowLocation = async () => {
     // Clear any previous errors before retrying
-    setManualAddress('');
+    setManualAddress("");
     setManualLat(0);
     setManualLng(0);
     setShowManualInput(false);
@@ -49,12 +59,15 @@ export default function LocationPermissionRequest({
     }
   };
 
-  const handleManualLocationSelect = (address: string, lat: number, lng: number, _placeName: string) => {
-    setManualAddress(address);
-    setManualLat(lat);
-    setManualLng(lng);
-    // placeName is available but not stored separately as we use address
-  };
+  const handleManualLocationSelect = useCallback(
+    (address: string, lat: number, lng: number, _placeName: string) => {
+      setManualAddress(address);
+      setManualLat(lat);
+      setManualLng(lng);
+      // placeName is available but not stored separately as we use address
+    },
+    [],
+  );
 
   const handleSaveManualLocation = async () => {
     if (!manualAddress || manualLat === 0 || manualLng === 0) {
@@ -71,7 +84,7 @@ export default function LocationPermissionRequest({
       // Modal will automatically hide when isLocationEnabled becomes true
       onLocationGranted();
     } catch (error) {
-      console.error('Failed to save manual location:', error);
+      console.error("Failed to save manual location:", error);
     }
   };
 
@@ -88,8 +101,7 @@ export default function LocationPermissionRequest({
               className="w-8 h-8 text-orange-600"
               fill="none"
               stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+              viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -105,20 +117,20 @@ export default function LocationPermissionRequest({
             </svg>
           </div>
           <h2 className="text-xl font-bold text-neutral-900 mb-2">{title}</h2>
-          <p className="text-sm text-neutral-600">
-            {description}
-          </p>
+          <p className="text-sm text-neutral-600">{description}</p>
         </div>
 
         {!showManualInput ? (
           <>
             {locationError && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-600 mb-2 font-medium">{locationError}</p>
+                <p className="text-sm text-red-600 mb-2 font-medium">
+                  {locationError}
+                </p>
                 <p className="text-xs text-red-500">
-                  {locationError.includes('timeout')
-                    ? 'Please ensure your location/GPS is enabled and try again, or enter location manually.'
-                    : 'You can try again or enter your location manually below.'}
+                  {locationError.includes("timeout")
+                    ? "Please ensure your location/GPS is enabled and try again, or enter location manually."
+                    : "You can try again or enter your location manually below."}
                 </p>
               </div>
             )}
@@ -127,50 +139,63 @@ export default function LocationPermissionRequest({
               <button
                 onClick={handleAllowLocation}
                 disabled={isLocationLoading}
-                className="w-full py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
+                className="w-full py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                 {isLocationLoading ? (
                   <>
-                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                     <span>Getting your location...</span>
                   </>
+                ) : locationError ? (
+                  "Retry Location Access"
                 ) : (
-                  locationError ? 'Retry Location Access' : 'Allow Location Access'
+                  "Allow Location Access"
                 )}
               </button>
 
               <button
                 onClick={() => setShowManualInput(true)}
-                className="w-full py-3 bg-neutral-100 text-neutral-700 rounded-lg font-semibold hover:bg-neutral-200 transition-colors"
-              >
+                className="w-full py-3 bg-neutral-100 text-neutral-700 rounded-lg font-semibold hover:bg-neutral-200 transition-colors">
                 Enter Location Manually
               </button>
 
               {skipable && (
                 <button
                   onClick={onLocationGranted}
-                  className="w-full py-2 text-sm text-neutral-500 hover:text-neutral-700"
-                >
+                  className="w-full py-2 text-sm text-neutral-500 hover:text-neutral-700">
                   Skip for now
                 </button>
               )}
 
-              {locationPermissionStatus === 'session_granted' && !isLocationEnabled && (
-                <div className="mt-4 pt-4 border-t border-neutral-100">
-                  <p className="text-xs text-neutral-500 mb-2">
-                    Permission granted for this session, but location data is missing.
-                  </p>
-                  <button
-                    onClick={clearLocation}
-                    className="text-xs text-orange-600 font-medium hover:underline"
-                  >
-                    Reset and ask again
-                  </button>
-                </div>
-              )}
+              {locationPermissionStatus === "session_granted" &&
+                !isLocationEnabled && (
+                  <div className="mt-4 pt-4 border-t border-neutral-100">
+                    <p className="text-xs text-neutral-500 mb-2">
+                      Permission granted for this session, but location data is
+                      missing.
+                    </p>
+                    <button
+                      onClick={clearLocation}
+                      className="text-xs text-orange-600 font-medium hover:underline">
+                      Reset and ask again
+                    </button>
+                  </div>
+                )}
             </div>
           </>
         ) : (
@@ -190,15 +215,13 @@ export default function LocationPermissionRequest({
             <div className="flex gap-3">
               <button
                 onClick={() => setShowManualInput(false)}
-                className="flex-1 py-2 bg-neutral-100 text-neutral-700 rounded-lg font-semibold hover:bg-neutral-200 transition-colors"
-              >
+                className="flex-1 py-2 bg-neutral-100 text-neutral-700 rounded-lg font-semibold hover:bg-neutral-200 transition-colors">
                 Back
               </button>
               <button
                 onClick={handleSaveManualLocation}
                 disabled={!manualAddress || manualLat === 0}
-                className="flex-1 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
+                className="flex-1 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 Save Location
               </button>
             </div>
@@ -208,9 +231,3 @@ export default function LocationPermissionRequest({
     </div>
   );
 }
-
-
-
-
-
-

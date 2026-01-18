@@ -71,11 +71,10 @@ export default function GoogleMapsAutocomplete({
     // Clean up any existing autocomplete
     if (autocompleteRef.current) {
       try {
-        window.google?.maps?.event?.clearInstanceListeners?.(autocompleteRef.current);
-      } catch {
-        // Ignore cleanup errors
+        window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+      } catch (e) {
+        console.warn('Error clearing listeners:', e);
       }
-      autocompleteRef.current = null;
     }
 
     try {
@@ -104,7 +103,7 @@ export default function GoogleMapsAutocomplete({
 
         const lat = place.geometry.location.lat();
         const lng = place.geometry.location.lng();
-        const rawAddress = place.formatted_address || place.name || value;
+        const rawAddress = place.formatted_address || place.name || inputRef.current?.value || '';
         const address = cleanAddress(rawAddress);
         const placeName = place.name || address;
 
@@ -132,7 +131,7 @@ export default function GoogleMapsAutocomplete({
       console.error('Autocomplete initialization error:', err);
       setError(`Failed to initialize autocomplete: ${errorMessage}`);
     }
-  }, [onChange, value]);
+  }, [onChange]); // Removed 'value' from dependencies
 
   useEffect(() => {
     if (isLoaded && inputRef.current && !autocompleteRef.current) {
