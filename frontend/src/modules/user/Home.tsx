@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import HomeHero from "./components/HomeHero";
+import HomeBannerCarousel from "./components/HomeBannerCarousel";
 import PromoStrip from "./components/PromoStrip";
 import LowestPricesEver from "./components/LowestPricesEver";
 import CategoryTileSection from "./components/CategoryTileSection";
@@ -47,7 +48,7 @@ export default function Home() {
         const response = await getHomeContent(
           undefined,
           location?.latitude,
-          location?.longitude
+          location?.longitude,
         );
         if (response.success && response.data) {
           setHomeData(response.data);
@@ -74,34 +75,37 @@ export default function Home() {
     const preloadHeaderCategories = async () => {
       try {
         // Wait a bit after initial load to not interfere with main content
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
 
         const headerCategories = await getHeaderCategoriesPublic(true);
         // Preload data for each header category (including 'all')
-        const slugsToPreload = ['all', ...headerCategories.map(cat => cat.slug)];
+        const slugsToPreload = [
+          "all",
+          ...headerCategories.map((cat) => cat.slug),
+        ];
 
         // Preload in batches to avoid overwhelming the network
         const batchSize = 2;
         for (let i = 0; i < slugsToPreload.length; i += batchSize) {
           const batch = slugsToPreload.slice(i, i + batchSize);
           await Promise.all(
-            batch.map(slug =>
+            batch.map((slug) =>
               getHomeContent(
                 slug,
                 location?.latitude,
                 location?.longitude,
                 true,
                 5 * 60 * 1000,
-                true
-              ).catch(err => {
+                true,
+              ).catch((err) => {
                 // Silently fail - this is just preloading
                 console.debug(`Failed to preload data for ${slug}:`, err);
-              })
-            )
+              }),
+            ),
           );
           // Small delay between batches
           if (i + batchSize < slugsToPreload.length) {
-            await new Promise(resolve => setTimeout(resolve, 200));
+            await new Promise((resolve) => setTimeout(resolve, 200));
           }
         }
       } catch (error) {
@@ -120,13 +124,13 @@ export default function Home() {
     return products.filter(
       (p) =>
         p.categoryId === tabId ||
-        (p.category && (p.category._id === tabId || p.category.slug === tabId))
+        (p.category && (p.category._id === tabId || p.category.slug === tabId)),
     );
   };
 
   const filteredProducts = useMemo(
     () => getFilteredProducts(activeTab),
-    [activeTab, products]
+    [activeTab, products],
   );
 
   if (loading && !products.length) {
@@ -137,16 +141,26 @@ export default function Home() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center">
         <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-4">
-          <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg
+            className="w-10 h-10 text-red-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Oops! Something went wrong</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          Oops! Something went wrong
+        </h3>
         <p className="text-gray-600 mb-6 max-w-xs">{error}</p>
         <button
           onClick={() => window.location.reload()}
-          className="px-6 py-2 bg-green-600 text-white rounded-full font-medium hover:bg-green-700 transition-colors"
-        >
+          className="px-6 py-2 bg-green-600 text-white rounded-full font-medium hover:bg-green-700 transition-colors">
           Try Refreshing
         </button>
       </div>
@@ -161,8 +175,18 @@ export default function Home() {
       {/* Promo Strip */}
       <PromoStrip activeTab={activeTab} />
 
+      {/* Dynamic Banners Carousel */}
+      {activeTab === "all" &&
+        homeData.promoBanners &&
+        homeData.promoBanners.length > 0 && (
+          <HomeBannerCarousel banners={homeData.promoBanners} />
+        )}
+
       {/* LOWEST PRICES EVER Section */}
-      <LowestPricesEver activeTab={activeTab} products={homeData.lowestPrices} />
+      <LowestPricesEver
+        activeTab={activeTab}
+        products={homeData.lowestPrices}
+      />
 
       {/* Main content */}
       <div
@@ -208,9 +232,7 @@ export default function Home() {
                 title="Bestsellers"
                 tiles={
                   homeData.bestsellers && homeData.bestsellers.length > 0
-                    ? homeData.bestsellers
-                      .slice(0, 6)
-                      .map((card: any) => {
+                    ? homeData.bestsellers.slice(0, 6).map((card: any) => {
                         // Bestseller cards have categoryId and productImages array from backend
                         return {
                           id: card.id,
@@ -236,22 +258,30 @@ export default function Home() {
                 {homeData.homeSections.map((section: any) => {
                   const columnCount = Number(section.columns) || 4;
 
-                  if (section.displayType === "products" && section.data && section.data.length > 0) {
+                  if (
+                    section.displayType === "products" &&
+                    section.data &&
+                    section.data.length > 0
+                  ) {
                     // Strict column mapping as requested - applies to ALL screen sizes including mobile
-                    const gridClass = {
-                      2: "grid-cols-2",
-                      3: "grid-cols-3",
-                      4: "grid-cols-4",
-                      6: "grid-cols-6",
-                      8: "grid-cols-8"
-                    }[columnCount] || "grid-cols-4";
+                    const gridClass =
+                      {
+                        2: "grid-cols-2",
+                        3: "grid-cols-3",
+                        4: "grid-cols-4",
+                        6: "grid-cols-6",
+                        8: "grid-cols-8",
+                      }[columnCount] || "grid-cols-4";
 
                     // Use compact mode for 4 or more columns to fit content on mobile
                     const isCompact = columnCount >= 4;
-                    const gapClass = columnCount >= 4 ? "gap-2" : "gap-3 md:gap-4";
+                    const gapClass =
+                      columnCount >= 4 ? "gap-2" : "gap-3 md:gap-4";
 
                     return (
-                      <div key={section.id} className="mt-6 mb-6 md:mt-8 md:mb-8">
+                      <div
+                        key={section.id}
+                        className="mt-6 mb-6 md:mt-8 md:mb-8">
                         {section.title && (
                           <h2 className="text-lg md:text-2xl font-semibold text-neutral-900 mb-3 md:mb-6 px-4 md:px-6 lg:px-8 tracking-tight capitalize">
                             {section.title}
@@ -324,8 +354,9 @@ export default function Home() {
                             />
                           ) : (
                             <div
-                              className={`w-full h-16 flex items-center justify-center text-3xl text-neutral-300 ${tile.bgColor || "bg-neutral-50"
-                                }`}>
+                              className={`w-full h-16 flex items-center justify-center text-3xl text-neutral-300 ${
+                                tile.bgColor || "bg-neutral-50"
+                              }`}>
                               {tile.name.charAt(0)}
                             </div>
                           )}

@@ -71,6 +71,9 @@ import * as lowestPricesController from "../modules/admin/controllers/adminLowes
 // PromoStrip Controllers
 import * as promoStripController from "../modules/admin/controllers/adminPromoStripController";
 
+// Banner Controllers
+import * as bannerController from "../modules/admin/controllers/adminBannerController";
+
 const router = Router();
 
 // All routes require admin authentication
@@ -85,27 +88,27 @@ router.put("/profile", profileController.updateProfile);
 router.get("/dashboard/stats", dashboardController.getDashboardStatsController);
 router.get(
   "/dashboard/analytics",
-  dashboardController.getSalesAnalyticsController
+  dashboardController.getSalesAnalyticsController,
 );
 router.get(
   "/dashboard/top-sellers",
-  dashboardController.getTopSellersController
+  dashboardController.getTopSellersController,
 );
 router.get(
   "/dashboard/recent-orders",
-  dashboardController.getRecentOrdersController
+  dashboardController.getRecentOrdersController,
 );
 router.get(
   "/dashboard/sales-by-location",
-  dashboardController.getSalesByLocationController
+  dashboardController.getSalesByLocationController,
 );
 router.get(
   "/dashboard/today-sales",
-  dashboardController.getTodaySalesController
+  dashboardController.getTodaySalesController,
 );
 router.get(
   "/dashboard/order-analytics",
-  dashboardController.getOrderAnalyticsController
+  dashboardController.getOrderAnalyticsController,
 );
 
 // ==================== Category Routes ====================
@@ -172,17 +175,17 @@ router.put("/delivery/:id", deliveryController.updateDeliveryBoy);
 router.patch("/delivery/:id/status", deliveryController.updateDeliveryStatus);
 router.patch(
   "/delivery/:id/availability",
-  deliveryController.updateDeliveryBoyAvailability
+  deliveryController.updateDeliveryBoyAvailability,
 );
 router.delete("/delivery/:id", deliveryController.deleteDeliveryBoy);
 router.get(
   "/delivery/:id/assignments",
-  deliveryController.getDeliveryAssignments
+  deliveryController.getDeliveryAssignments,
 );
 router.post("/delivery/:id/collect-cash", deliveryController.collectCash);
 router.get(
   "/delivery/:id/cash-collections",
-  deliveryController.getDeliveryBoyCashCollections
+  deliveryController.getDeliveryBoyCashCollections,
 );
 
 // ==================== Payment Routes ====================
@@ -191,7 +194,7 @@ router.get("/payment-methods/:id", paymentController.getPaymentMethodById);
 router.put("/payment-methods/:id", paymentController.updatePaymentMethod);
 router.patch(
   "/payment-methods/:id/status",
-  paymentController.updatePaymentMethodStatus
+  paymentController.updatePaymentMethodStatus,
 );
 
 // ==================== Settings Routes ====================
@@ -200,12 +203,12 @@ router.put("/settings", settingsController.updateAppSettings);
 router.get("/settings/payment-methods", settingsController.getPaymentMethods);
 router.put(
   "/settings/payment-methods",
-  settingsController.updatePaymentMethods
+  settingsController.updatePaymentMethods,
 );
 router.get("/settings/sms-gateway", settingsController.getSMSGatewaySettings);
 router.put(
   "/settings/sms-gateway",
-  settingsController.updateSMSGatewaySettings
+  settingsController.updateSMSGatewaySettings,
 );
 
 // ==================== Coupon Routes ====================
@@ -226,11 +229,11 @@ router.post("/notifications/:id/send", notificationController.sendNotification);
 router.patch("/notifications/:id/read", notificationController.markAsRead);
 router.patch(
   "/notifications/read-all",
-  notificationController.markMultipleAsRead
+  notificationController.markMultipleAsRead,
 );
 router.patch(
   "/notifications/mark-read",
-  notificationController.markMultipleAsRead
+  notificationController.markMultipleAsRead,
 ); // Legacy support
 
 // ==================== Wallet Routes ====================
@@ -241,8 +244,14 @@ router.post("/wallet/withdrawal", walletController.processWithdrawal);
 
 // ==================== Financial Dashboard Routes ====================
 router.get("/financial/dashboard", walletController.getFinancialDashboard);
-router.get("/financial/order-transactions", walletController.getAllOrderTransactions);
-router.get("/financial/delivery-charges", walletController.getDeliveryChargesReport);
+router.get(
+  "/financial/order-transactions",
+  walletController.getAllOrderTransactions,
+);
+router.get(
+  "/financial/delivery-charges",
+  walletController.getDeliveryChargesReport,
+);
 
 // ==================== Tax Routes ====================
 router.get("/taxes", taxController.getTaxes);
@@ -256,16 +265,16 @@ router.delete("/taxes/:id", taxController.deleteTax);
 router.get("/cash-collections", cashCollectionController.getCashCollections);
 router.get(
   "/cash-collections/:id",
-  cashCollectionController.getCashCollectionById
+  cashCollectionController.getCashCollectionById,
 );
 router.post("/cash-collections", cashCollectionController.createCashCollection);
 router.put(
   "/cash-collections/:id",
-  cashCollectionController.updateCashCollection
+  cashCollectionController.updateCashCollection,
 );
 router.delete(
   "/cash-collections/:id",
-  cashCollectionController.deleteCashCollection
+  cashCollectionController.deleteCashCollection,
 );
 
 // ==================== FAQ Routes ====================
@@ -327,19 +336,49 @@ router.put("/home-sections/reorder", homeSectionController.reorderHomeSections);
 
 // ==================== Bestseller Card Routes ====================
 router.get("/bestseller-cards", bestsellerCardController.getBestsellerCards);
-router.get("/bestseller-cards/:id", bestsellerCardController.getBestsellerCardById);
+router.get(
+  "/bestseller-cards/:id",
+  bestsellerCardController.getBestsellerCardById,
+);
 router.post("/bestseller-cards", bestsellerCardController.createBestsellerCard);
-router.put("/bestseller-cards/:id", bestsellerCardController.updateBestsellerCard);
-router.delete("/bestseller-cards/:id", bestsellerCardController.deleteBestsellerCard);
-router.put("/bestseller-cards/reorder", bestsellerCardController.reorderBestsellerCards);
+router.put(
+  "/bestseller-cards/:id",
+  bestsellerCardController.updateBestsellerCard,
+);
+router.delete(
+  "/bestseller-cards/:id",
+  bestsellerCardController.deleteBestsellerCard,
+);
+router.put(
+  "/bestseller-cards/reorder",
+  bestsellerCardController.reorderBestsellerCards,
+);
 
 // ==================== Lowest Prices Product Routes ====================
-router.get("/lowest-prices-products", lowestPricesController.getLowestPricesProducts);
-router.get("/lowest-prices-products/:id", lowestPricesController.getLowestPricesProductById);
-router.post("/lowest-prices-products", lowestPricesController.createLowestPricesProduct);
-router.put("/lowest-prices-products/:id", lowestPricesController.updateLowestPricesProduct);
-router.delete("/lowest-prices-products/:id", lowestPricesController.deleteLowestPricesProduct);
-router.put("/lowest-prices-products/reorder", lowestPricesController.reorderLowestPricesProducts);
+router.get(
+  "/lowest-prices-products",
+  lowestPricesController.getLowestPricesProducts,
+);
+router.get(
+  "/lowest-prices-products/:id",
+  lowestPricesController.getLowestPricesProductById,
+);
+router.post(
+  "/lowest-prices-products",
+  lowestPricesController.createLowestPricesProduct,
+);
+router.put(
+  "/lowest-prices-products/:id",
+  lowestPricesController.updateLowestPricesProduct,
+);
+router.delete(
+  "/lowest-prices-products/:id",
+  lowestPricesController.deleteLowestPricesProduct,
+);
+router.put(
+  "/lowest-prices-products/reorder",
+  lowestPricesController.reorderLowestPricesProducts,
+);
 
 // ==================== PromoStrip Routes ====================
 router.get("/promo-strips", promoStripController.getAllPromoStrips);
@@ -347,5 +386,11 @@ router.get("/promo-strips/:id", promoStripController.getPromoStripById);
 router.post("/promo-strips", promoStripController.createPromoStrip);
 router.put("/promo-strips/:id", promoStripController.updatePromoStrip);
 router.delete("/promo-strips/:id", promoStripController.deletePromoStrip);
+
+// ==================== Banner Routes ====================
+router.get("/banners", bannerController.getAllBanners);
+router.post("/banners", bannerController.createBanner);
+router.put("/banners/:id", bannerController.updateBanner);
+router.delete("/banners/:id", bannerController.deleteBanner);
 
 export default router;
