@@ -21,8 +21,22 @@ export interface BannerFormData {
 
 // Get all banners
 export const getBanners = async (): Promise<Banner[]> => {
-  const response = await api.get("/admin/banners");
-  return response.data.data;
+  try {
+    console.log('[adminBannerService] Fetching banners from:', api.defaults.baseURL);
+    const response = await api.get("/admin/banners");
+    console.log('[adminBannerService] Banners fetched successfully:', response.data.data?.length || 0);
+    return response.data.data;
+  } catch (error: any) {
+    console.error('[adminBannerService] Error fetching banners:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      url: error.config?.url,
+      baseURL: error.config?.baseURL,
+      hasAuthToken: !!error.config?.headers?.Authorization,
+    });
+    throw error;
+  }
 };
 
 // Create banner

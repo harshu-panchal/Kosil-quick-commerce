@@ -30,6 +30,7 @@ import productReviewRoutes from "./productReviewRoutes";
 import adminRoutes from "./adminRoutes";
 import customerTrackingRoutes from "../modules/customer/routes/trackingRoutes";
 import deliveryTrackingRoutes from "../modules/delivery/routes/trackingRoutes";
+import customerBannerRoutes from "./customerBannerRoutes";
 import {
   createOrder,
   getMyOrders,
@@ -108,6 +109,9 @@ router.use("/seller/dashboard", dashboardRoutes);
 
 // Seller management routes (protected, admin only)
 router.use("/sellers", sellerRoutes);
+
+// Public banner routes (no authentication required)
+router.use("/banners", customerBannerRoutes);
 
 // Admin routes (protected, admin only)
 router.use("/admin", adminRoutes);

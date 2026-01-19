@@ -28,5 +28,5 @@ services:
     buildCommand: npm install && npm run build
     staticPublishDir: dist
     envVars:
-      - key: VITE_API_URL
+      - key: VITE_API_BASE_URL
         value: https://kosil-backend.onrender.com/api/v1
