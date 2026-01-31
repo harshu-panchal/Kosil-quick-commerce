@@ -156,20 +156,17 @@ export function setupForegroundNotificationHandler(handler?: (payload: any) => v
     onMessage(messaging, (payload) => {
         console.log('📬 Foreground message received:', payload);
 
-        // Default behavior: Show a standard notification even in foreground if user wants
-        // Or you can use a custom toast/snackbar in the UI
-        if ('Notification' in window && Notification.permission === 'granted') {
-            const { title, body, icon } = payload.notification || {};
-            new Notification(title || 'New Notification', {
-                body: body,
-                icon: icon || '/favicon.ico',
-                data: payload.data
-            });
-        }
+        // We've removed original 'new Notification' here to prevent "double notifications".
+        // Foreground notifications should ideally be handled by in-app UI like Toasts or Modals
+        // to provide a premium feel and avoid cluttering the system notification tray
+        // while the user is already using the app.
 
-        // Call custom handler if provided (e.g. to update UI badge or show toast)
+        // Call custom handler if provided (e.g. to show a Toast, update UI badge, or show a modal)
         if (handler) {
             handler(payload);
+        } else {
+            // Optional: log that no handler was provided
+            console.log('No foreground handler provided for message:', payload.notification?.title);
         }
     });
 }

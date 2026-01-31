@@ -44,11 +44,14 @@ router.post('/save', authenticate, async (req: Request, res: Response) => {
             return;
         }
 
-        // Add token to array (web or mobile)
+        // Add token to array (web or mobile) and track if it's new
+        let isNewToken = false;
+
         if (platform === 'web') {
             if (!user.fcmTokens) user.fcmTokens = [];
             if (!user.fcmTokens.includes(token)) {
                 user.fcmTokens.push(token);
+                isNewToken = true;
                 // Limit to 10 tokens per user per platform to prevent unlimited growth
                 if (user.fcmTokens.length > 10) {
                     user.fcmTokens = user.fcmTokens.slice(-10);
@@ -58,6 +61,7 @@ router.post('/save', authenticate, async (req: Request, res: Response) => {
             if (!user.fcmTokenMobile) user.fcmTokenMobile = [];
             if (!user.fcmTokenMobile.includes(token)) {
                 user.fcmTokenMobile.push(token);
+                isNewToken = true;
                 if (user.fcmTokenMobile.length > 10) {
                     user.fcmTokenMobile = user.fcmTokenMobile.slice(-10);
                 }
@@ -66,21 +70,25 @@ router.post('/save', authenticate, async (req: Request, res: Response) => {
 
         await user.save();
 
-        // Send a welcome/login notification to the specific token that was just saved
-        try {
-            await sendPushNotification([token], {
-                title: 'Login Successful',
-                body: 'Welcome back to Kosil! You have successfully logged in.',
-                data: {
-                    type: 'login_success',
-                    link: '/',
-                    timestamp: new Date().toISOString()
-                }
-            });
-            console.log('Login notification sent to new token');
-        } catch (pushError) {
-            console.error('Failed to send login notification:', pushError);
-            // Don't fail the request if notification fails, just log it
+        // ONLY send a welcome/login notification if the token was JUST added
+        // This prevents the "4 notifications" issue when the app hits /save multiple times
+        if (isNewToken) {
+            try {
+                await sendPushNotification([token], {
+                    title: 'Login Successful',
+                    body: 'Welcome back to Kosil! You have successfully logged in.',
+                    data: {
+                        type: 'login_success',
+                        link: '/',
+                        timestamp: new Date().toISOString()
+                    }
+                });
+                console.log(`[${new Date().toISOString()}] Login notification sent to NEW token: ${token.substring(0, 10)}...`);
+            } catch (pushError) {
+                console.error('Failed to send login notification:', pushError);
+            }
+        } else {
+            console.log(`[${new Date().toISOString()}] Token already registered, skipping duplicate notification.`);
         }
 
         res.json({ success: true, message: 'FCM token saved' });
