@@ -17,10 +17,14 @@ const recentlyNotifiedTokens = new Map<string, number>();
  * @access  Private
  */
 router.post('/save', authenticate, async (req: Request, res: Response) => {
-    console.log(`[${new Date().toISOString()}] FCM POST /save - Body:`, JSON.stringify(req.body));
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] 📥 Received FCM /save request`);
+    console.log(`[${timestamp}] User: ${req.user?.userId} (${req.user?.userType})`);
+    console.log(`[${timestamp}] Body:`, JSON.stringify(req.body, null, 2));
+
     try {
         const { platform = 'web' } = req.body;
-        const token = req.body.token || req.body.fcmToken;
+        const token = req.body.token || req.body.fcmToken || req.body.registrationToken;
 
         if (!token) {
             console.warn(`[${new Date().toISOString()}] FCM POST /save - Missing token in body`);
@@ -53,14 +57,10 @@ router.post('/save', authenticate, async (req: Request, res: Response) => {
             return;
         }
 
-        // Add token to array (web or mobile) and track if it's new
-        let isNewToken = false;
-
         if (platform === 'web') {
             if (!user.fcmTokens) user.fcmTokens = [];
             if (!user.fcmTokens.includes(token)) {
                 user.fcmTokens.push(token);
-                isNewToken = true;
                 // Limit to 10 tokens per user per platform to prevent unlimited growth
                 if (user.fcmTokens.length > 10) {
                     user.fcmTokens = user.fcmTokens.slice(-10);
@@ -70,7 +70,6 @@ router.post('/save', authenticate, async (req: Request, res: Response) => {
             if (!user.fcmTokenMobile) user.fcmTokenMobile = [];
             if (!user.fcmTokenMobile.includes(token)) {
                 user.fcmTokenMobile.push(token);
-                isNewToken = true;
                 if (user.fcmTokenMobile.length > 10) {
                     user.fcmTokenMobile = user.fcmTokenMobile.slice(-10);
                 }

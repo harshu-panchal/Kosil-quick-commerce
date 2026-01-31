@@ -112,22 +112,24 @@ export async function registerFCMToken(forceUpdate = false) {
             return null;
         }
 
+        // Detect platform
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const platform = isMobile ? 'mobile' : 'web';
+
         // Save to backend
         try {
             const response = await api.post(`/fcm-tokens/save`, {
                 token: token,
-                platform: 'web'
+                platform: platform
             });
 
             if (response.data.success) {
-                localStorage.setItem('fcm_token_web', token);
-                console.log('✅ FCM token registered with backend');
+                localStorage.setItem('fcm_token_web', token); // We still use this as local flag
+                console.log(`✅ FCM token registered with backend as ${platform}`);
                 return token;
             }
         } catch (apiError) {
             console.error('Failed to register token with backend API:', apiError);
-            // We obtained the token but failed to save it. We should probably not save it to local storage 
-            // essentially treating it as "not registered" so we retry next time.
         }
 
         return token;
@@ -178,6 +180,19 @@ export function setupForegroundNotificationHandler(handler?: (payload: any) => v
 
 // Initialize push notifications
 export async function initializePushNotifications() {
+    // Basic compatibility check
+    if (!('serviceWorker' in navigator) || !('Notification' in window) || !('PushManager' in window)) {
+        console.warn('⚠️ Push notifications are not supported in this browser environment.');
+        return;
+    }
+
+    // Secure context check (required for Service Workers and Notifications)
+    if (!window.isSecureContext) {
+        console.error('❌ Push notifications require a Secure Context (HTTPS or localhost). ' +
+            'If you are testing on a mobile device via IP, please use a secure tunnel (like ngrok) or deploy to a staging server.');
+        return;
+    }
+
     try {
         // Just register service worker on init to be ready
         await registerServiceWorker();
