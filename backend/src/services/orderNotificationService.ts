@@ -423,15 +423,10 @@ export async function handleOrderAcceptance(
 
         await order.save();
 
-        // Emit order-accepted event to stop notifications for all delivery boys
-        io.to('delivery-notifications').emit('order-accepted', {
-            orderId,
-            acceptedBy: normalizedDeliveryBoyId,
-        });
-
-        // Also emit to individual rooms (notifiedId is already a string from Set)
+        // Emit order-accepted event to all delivery boys who were notified
+        // (Only to individual rooms, not general room)
         if (state) {
-             for (const notifiedId of state.notifiedDeliveryBoys) {
+            for (const notifiedId of state.notifiedDeliveryBoys) {
                 const notifiedIdString = String(notifiedId).trim();
                 io.to(`delivery-${notifiedIdString}`).emit('order-accepted', {
                     orderId,
@@ -441,10 +436,8 @@ export async function handleOrderAcceptance(
             // Clean up notification state
             notificationStates.delete(orderId);
         } else {
-             // If no state, we can't emit to specific originally notified list,
-             // but 'delivery-notifications' room covers the general case.
-             // We can also try to emit to the accepting delivery boy just in case
-             io.to(`delivery-${normalizedDeliveryBoyId}`).emit('order-accepted', {
+            // If no state, emit to the accepting delivery boy
+            io.to(`delivery-${normalizedDeliveryBoyId}`).emit('order-accepted', {
                 orderId,
                 acceptedBy: normalizedDeliveryBoyId,
             });
@@ -504,11 +497,7 @@ export async function handleOrderRejection(
         const allRejected = state.rejectedDeliveryBoys.size === state.notifiedDeliveryBoys.size;
 
         if (allRejected) {
-            // Emit order-rejected-by-all event
-            io.to('delivery-notifications').emit('order-rejected-by-all', {
-                orderId,
-            });
-
+            // Update order in database to "Rejected"
             try {
                 // Update order in database to "Rejected"
                 const order = await Order.findById(orderId);

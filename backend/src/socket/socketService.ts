@@ -203,10 +203,10 @@ export const initializeSocket = (httpServer: HttpServer) => {
             const normalizedDeliveryBoyId = String(deliveryBoyId).trim();
             console.log(`🔔 Delivery boy ${normalizedDeliveryBoyId} joined notifications room`);
 
-            socket.join('delivery-notifications');
+            // Only join personal room (not general room) to prevent duplicate notifications
             socket.join(`delivery-${normalizedDeliveryBoyId}`);
 
-            console.log(`✅ Delivery boy ${normalizedDeliveryBoyId} joined rooms: delivery-notifications, delivery-${normalizedDeliveryBoyId}`);
+            console.log(`✅ Delivery boy ${normalizedDeliveryBoyId} joined room: delivery-${normalizedDeliveryBoyId}`);
 
             // Send confirmation that they joined successfully
             socket.emit('joined-notifications-room', {
@@ -323,12 +323,12 @@ export const initializeSocket = (httpServer: HttpServer) => {
                             tracking.eta = eta;
                             // Only update status if it's a spatial status (nearby/in_transit), don't override Delivered/Picked Up
                             if (tracking.status !== 'delivered' && tracking.status !== 'picked_up' && tracking.status !== 'idle') {
-                                 tracking.status = status as any;
+                                tracking.status = status as any;
                             }
                         }
                         await tracking.save();
                     } catch (dbError) {
-                         console.error('Error syncing location to DB:', dbError);
+                        console.error('Error syncing location to DB:', dbError);
                     }
                 }
             } catch (err) {

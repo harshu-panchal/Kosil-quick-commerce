@@ -1,9 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import DeliveryHeader from '../components/DeliveryHeader';
 import DeliveryBottomNav from '../components/DeliveryBottomNav';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function DeliveryMenu() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const menuItems = [
     { id: 'menu-1', title: 'Profile', route: '/delivery/profile' },
@@ -110,9 +112,8 @@ export default function DeliveryMenu() {
 
   const handleMenuClick = (route: string) => {
     if (route === '/delivery/login') {
-      // Handle logout logic here
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('userData');
+      // Properly logout using AuthContext to clear all auth state
+      logout();
       navigate(route);
     } else {
       // Navigate to the selected route

@@ -40,6 +40,24 @@ export const useDeliveryOrderNotifications = () => {
         }
 
         const token = localStorage.getItem('authToken');
+
+        // Check if we already have an active socket connection (prevent duplicates)
+        if (socketRef.current && socketRef.current.connected) {
+            console.log('🔌 Reusing existing delivery notification socket connection');
+            setState(prev => ({
+                ...prev,
+                isConnected: true,
+                error: null,
+            }));
+            return socketRef.current;
+        }
+
+        // Disconnect any stale socket before creating new one
+        if (socketRef.current) {
+            console.log('🔌 Disconnecting stale socket before creating new connection');
+            socketRef.current.disconnect();
+        }
+
         const socket = io(getSocketBaseURL(), {
             auth: {
                 token,

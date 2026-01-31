@@ -76,15 +76,20 @@ router.post('/save', authenticate, async (req: Request, res: Response) => {
             }
         }
 
+        // Check if this is a NEW token (not a re-registration)
+        const isNewToken = platform === 'web'
+            ? !user.fcmTokens?.includes(token)
+            : !user.fcmTokenMobile?.includes(token);
+
         await user.save();
 
-        // Check cooldown to prevent "4 notifications" issue during rapid hits
+        // Check cooldown to prevent duplicate notifications during rapid re-registrations
         const now = Date.now();
         const lastNotified = recentlyNotifiedTokens.get(token) || 0;
-        const cooldownMs = 60000; // 1 minute cooldown
+        const cooldownMs = 300000; // 5 minutes cooldown (increased from 1 minute)
 
-        // Send notification if it's a new token OR if cooldown has passed
-        if (true) {
+        // Only send notification for NEW tokens that haven't been notified recently
+        if (isNewToken && (now - lastNotified > cooldownMs)) {
             recentlyNotifiedTokens.set(token, now);
             try {
                 await sendPushNotification([token], {
@@ -96,9 +101,9 @@ router.post('/save', authenticate, async (req: Request, res: Response) => {
                         timestamp: new Date().toISOString()
                     }
                 });
-                console.log(`[${new Date().toISOString()}] Login notification sent to token: ${token.substring(0, 10)}...`);
+                console.log(`[${new Date().toISOString()}] Login notification sent to NEW token: ${token.substring(0, 10)}...`);
 
-                // Cleanup map occasionally to prevent memory leaks (simple version)
+                // Cleanup map occasionally to prevent memory leaks
                 if (recentlyNotifiedTokens.size > 1000) {
                     const expiry = Date.now() - (cooldownMs * 5);
                     for (const [t, time] of recentlyNotifiedTokens.entries()) {
@@ -109,7 +114,11 @@ router.post('/save', authenticate, async (req: Request, res: Response) => {
                 console.error('Failed to send login notification:', pushError);
             }
         } else {
-            console.log(`[${new Date().toISOString()}] Notification suppressed due to cooldown (last sent ${Math.round((now - lastNotified) / 1000)}s ago)`);
+            if (!isNewToken) {
+                console.log(`[${new Date().toISOString()}] Notification suppressed: Token already registered (re-registration)`);
+            } else {
+                console.log(`[${new Date().toISOString()}] Notification suppressed: Cooldown active (last sent ${Math.round((now - lastNotified) / 1000)}s ago)`);
+            }
         }
 
         res.json({ success: true, message: 'FCM token saved' });
