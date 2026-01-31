@@ -6,6 +6,7 @@ import {
 } from "../../../services/api/auth/sellerAuthService";
 import OTPInput from "../../../components/OTPInput";
 import { useAuth } from "../../../context/AuthContext";
+import { registerFCMToken } from "../../../services/pushNotificationService";
 
 export default function SellerLogin() {
   const navigate = useNavigate();
@@ -60,6 +61,14 @@ export default function SellerLogin() {
           address: response.data.user.address,
           city: response.data.user.city,
         });
+
+        // Register FCM token
+        try {
+          await registerFCMToken(true);
+        } catch (fcmError) {
+          console.error("Failed to register FCM token for seller", fcmError);
+        }
+
         // Navigate to seller dashboard only on success
         navigate("/seller", { replace: true });
       } else {
@@ -168,11 +177,10 @@ export default function SellerLogin() {
               <button
                 onClick={handleMobileLogin}
                 disabled={mobileNumber.length !== 10 || loading}
-                className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-colors ${
-                  mobileNumber.length === 10 && !loading
+                className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-colors ${mobileNumber.length === 10 && !loading
                     ? "bg-teal-600 text-white hover:bg-teal-700 shadow-md"
                     : "bg-neutral-300 text-neutral-500 cursor-not-allowed"
-                }`}>
+                  }`}>
                 {loading ? "Sending..." : "Continue"}
               </button>
             </div>
@@ -219,14 +227,14 @@ export default function SellerLogin() {
                         // Show error but stay on page
                         setError(
                           response.message ||
-                            "Failed to resend OTP. Please try again."
+                          "Failed to resend OTP. Please try again."
                         );
                       }
                     } catch (err: any) {
                       // Show error but stay on page
                       setError(
                         err.response?.data?.message ||
-                          "Failed to resend OTP. Please try again."
+                        "Failed to resend OTP. Please try again."
                       );
                     } finally {
                       setLoading(false);

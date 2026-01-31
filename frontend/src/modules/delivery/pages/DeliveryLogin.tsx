@@ -7,6 +7,7 @@ import {
 import OTPInput from "../../../components/OTPInput";
 import { useAuth } from "../../../context/AuthContext";
 import { removeAuthToken } from "../../../services/api/config";
+import { registerFCMToken } from "../../../services/pushNotificationService";
 
 export default function DeliveryLogin() {
   const navigate = useNavigate();
@@ -70,6 +71,14 @@ export default function DeliveryLogin() {
           ...response.data.user,
           userType: "Delivery",
         });
+
+        // Register FCM token
+        try {
+          await registerFCMToken(true);
+        } catch (fcmError) {
+          console.error("Failed to register FCM token for delivery partner", fcmError);
+        }
+
         navigate("/delivery");
       }
     } catch (err: any) {
@@ -173,11 +182,10 @@ export default function DeliveryLogin() {
               <button
                 onClick={handleMobileLogin}
                 disabled={mobileNumber.length !== 10 || loading}
-                className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-colors ${
-                  mobileNumber.length === 10 && !loading
+                className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-colors ${mobileNumber.length === 10 && !loading
                     ? "bg-teal-600 text-white hover:bg-teal-700 shadow-md"
                     : "bg-neutral-300 text-neutral-500 cursor-not-allowed"
-                }`}>
+                  }`}>
                 {loading ? "Sending..." : "Continue"}
               </button>
             </div>

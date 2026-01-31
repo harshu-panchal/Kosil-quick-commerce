@@ -8,9 +8,12 @@ import {
 import { uploadDocument } from "../../../services/api/uploadService";
 import { validateDocumentFile } from "../../../utils/imageUpload";
 import OTPInput from "../../../components/OTPInput";
+import { useAuth } from "../../../context/AuthContext";
+import { registerFCMToken } from "../../../services/pushNotificationService";
 
 export default function DeliverySignUp() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     mobile: "",
@@ -79,8 +82,7 @@ export default function DeliverySignUp() {
         const { latitude, longitude } = position.coords;
         try {
           const response = await fetch(
-            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${
-              import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY
             }`
           );
           const data = await response.json();
@@ -239,7 +241,20 @@ export default function DeliverySignUp() {
 
     try {
       const response = await verifyOTP(formData.mobile, otp, sessionId);
-      if (response.success) {
+      if (response.success && response.data) {
+        // Update auth context
+        login(response.data.token, {
+          ...response.data.user,
+          userType: "Delivery",
+        });
+
+        // Register FCM token
+        try {
+          await registerFCMToken(true);
+        } catch (fcmError) {
+          console.error("Failed to register FCM token for delivery partner (signup)", fcmError);
+        }
+
         navigate("/delivery");
       }
     } catch (err: any) {
@@ -619,16 +634,15 @@ export default function DeliverySignUp() {
               <button
                 type="submit"
                 disabled={loading || uploadingDocs}
-                className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-colors ${
-                  !loading && !uploadingDocs
+                className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-colors ${!loading && !uploadingDocs
                     ? "bg-teal-600 text-white hover:bg-teal-700 shadow-md"
                     : "bg-neutral-300 text-neutral-500 cursor-not-allowed"
-                }`}>
+                  }`}>
                 {uploadingDocs
                   ? "Uploading Documents..."
                   : loading
-                  ? "Creating Account..."
-                  : "Sign Up"}
+                    ? "Creating Account..."
+                    : "Sign Up"}
               </button>
 
               {/* Login Link */}
