@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Suspense, lazy, startTransition, useEffect } from "react";
 import { CartProvider } from "./context/CartContext";
 import { OrdersProvider } from "./context/OrdersContext";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { LocationProvider } from "./context/LocationContext";
 import { ToastProvider } from "./context/ToastContext";
@@ -265,7 +265,7 @@ const AdminBillingSettings = lazy(
   () => import("./modules/admin/pages/AdminBillingSettings"),
 );
 
-import { initializePushNotifications, setupForegroundNotificationHandler } from "./services/pushNotificationService";
+import { initializePushNotifications, setupForegroundNotificationHandler, registerFCMToken } from "./services/pushNotificationService";
 
 function AppContent() {
   const { isAuthenticated } = useAuth();
@@ -280,7 +280,7 @@ function AppContent() {
   useEffect(() => {
     if (isAuthenticated) {
       console.log('🔄 User is authenticated, ensuring FCM token is registered...');
-      registerFCMToken().catch(err => {
+      registerFCMToken().catch((err: any) => {
         console.error('Proactive FCM registration failed:', err);
       });
     }
