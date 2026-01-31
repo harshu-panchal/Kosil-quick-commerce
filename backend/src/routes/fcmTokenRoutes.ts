@@ -12,10 +12,13 @@ const router = express.Router();
  * @access  Private
  */
 router.post('/save', authenticate, async (req: Request, res: Response) => {
+    console.log(`[${new Date().toISOString()}] FCM POST /save - Body:`, JSON.stringify(req.body));
     try {
-        const { token, platform = 'web' } = req.body;
+        const { platform = 'web' } = req.body;
+        const token = req.body.token || req.body.fcmToken;
 
         if (!token) {
+            console.warn(`[${new Date().toISOString()}] FCM POST /save - Missing token in body`);
             res.status(400).json({ success: false, message: 'Token is required' });
             return;
         }

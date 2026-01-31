@@ -60,6 +60,9 @@ router.use("/auth/seller", sellerAuthRoutes);
 router.use("/auth/customer", customerAuthRoutes);
 router.use("/auth/delivery", deliveryAuthRoutes);
 
+// FCM Token Routes
+router.use("/fcm-tokens", fcmTokenRoutes);
+
 // Delivery routes (protected)
 router.use(
   "/delivery",
@@ -127,9 +130,6 @@ router.use("/banners", customerBannerRoutes);
 // Admin routes (protected, admin only)
 router.use("/admin", adminRoutes);
 router.use("/admin", adminWithdrawalRoutes);
-
-// FCM Token Routes
-router.use("/fcm-tokens", fcmTokenRoutes);
 
 // Upload routes (protected)
 router.use("/upload", uploadRoutes);
