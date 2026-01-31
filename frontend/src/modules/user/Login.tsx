@@ -6,7 +6,6 @@ import {
 } from "../../services/api/auth/customerAuthService";
 import { useAuth } from "../../context/AuthContext";
 import OTPInput from "../../components/OTPInput";
-import { registerFCMToken } from "../../services/pushNotificationService";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -59,12 +58,8 @@ export default function Login() {
           status: response.data.user.status,
         });
 
-        // Register FCM token
-        try {
-          await registerFCMToken(true);
-        } catch (e) {
-          console.error("Failed to register FCM token on login", e);
-        }
+        // FCM token registration is handled globally by App.tsx when auth state changes
+        // No need to call registerFCMToken here - it would cause duplicate notifications
 
         navigate("/");
       }

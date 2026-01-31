@@ -6,7 +6,6 @@ import {
 } from "../../../services/api/auth/sellerAuthService";
 import OTPInput from "../../../components/OTPInput";
 import { useAuth } from "../../../context/AuthContext";
-import { registerFCMToken } from "../../../services/pushNotificationService";
 
 export default function SellerLogin() {
   const navigate = useNavigate();
@@ -62,12 +61,8 @@ export default function SellerLogin() {
           city: response.data.user.city,
         });
 
-        // Register FCM token
-        try {
-          await registerFCMToken(true);
-        } catch (fcmError) {
-          console.error("Failed to register FCM token for seller", fcmError);
-        }
+        // FCM token registration is handled globally by App.tsx when auth state changes
+        // No need to call registerFCMToken here - it would cause duplicate notifications
 
         // Navigate to seller dashboard only on success
         navigate("/seller", { replace: true });
@@ -178,8 +173,8 @@ export default function SellerLogin() {
                 onClick={handleMobileLogin}
                 disabled={mobileNumber.length !== 10 || loading}
                 className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-colors ${mobileNumber.length === 10 && !loading
-                    ? "bg-teal-600 text-white hover:bg-teal-700 shadow-md"
-                    : "bg-neutral-300 text-neutral-500 cursor-not-allowed"
+                  ? "bg-teal-600 text-white hover:bg-teal-700 shadow-md"
+                  : "bg-neutral-300 text-neutral-500 cursor-not-allowed"
                   }`}>
                 {loading ? "Sending..." : "Continue"}
               </button>

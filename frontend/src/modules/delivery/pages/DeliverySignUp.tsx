@@ -9,7 +9,6 @@ import { uploadDocument } from "../../../services/api/uploadService";
 import { validateDocumentFile } from "../../../utils/imageUpload";
 import OTPInput from "../../../components/OTPInput";
 import { useAuth } from "../../../context/AuthContext";
-import { registerFCMToken } from "../../../services/pushNotificationService";
 
 export default function DeliverySignUp() {
   const navigate = useNavigate();
@@ -248,12 +247,8 @@ export default function DeliverySignUp() {
           userType: "Delivery",
         });
 
-        // Register FCM token
-        try {
-          await registerFCMToken(true);
-        } catch (fcmError) {
-          console.error("Failed to register FCM token for delivery partner (signup)", fcmError);
-        }
+        // FCM token registration is handled globally by App.tsx when auth state changes
+        // No need to call registerFCMToken here - it would cause duplicate notifications
 
         navigate("/delivery");
       }
@@ -635,8 +630,8 @@ export default function DeliverySignUp() {
                 type="submit"
                 disabled={loading || uploadingDocs}
                 className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-colors ${!loading && !uploadingDocs
-                    ? "bg-teal-600 text-white hover:bg-teal-700 shadow-md"
-                    : "bg-neutral-300 text-neutral-500 cursor-not-allowed"
+                  ? "bg-teal-600 text-white hover:bg-teal-700 shadow-md"
+                  : "bg-neutral-300 text-neutral-500 cursor-not-allowed"
                   }`}>
                 {uploadingDocs
                   ? "Uploading Documents..."
