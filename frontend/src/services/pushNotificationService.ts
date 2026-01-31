@@ -96,7 +96,12 @@ export async function getFCMToken() {
 
 // Register FCM token with backend
 export async function registerFCMToken(forceUpdate = false) {
-    if (!messaging) return null;
+    if (!messaging) {
+        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+            alert('⚠️ Cannot register FCM token: Messaging is not supported or initialized.');
+        }
+        return null;
+    }
 
     try {
         // Check if already registered

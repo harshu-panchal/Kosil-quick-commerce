@@ -19,8 +19,12 @@ let messaging: Messaging | null = null;
 
 try {
     messaging = getMessaging(app);
-} catch (error) {
-    console.warn('Firebase Messaging not supported in this environment (likely server-side or non-https localhost without overrides).', error);
+} catch (error: any) {
+    console.warn('Firebase Messaging not supported in this environment.', error);
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        // Only alert on mobile to avoid annoying desktop devs
+        alert(`⚠️ Firebase Messaging Init Failed: ${error.message || 'Unknown error'}`);
+    }
 }
 
 export { messaging, getToken, onMessage };
