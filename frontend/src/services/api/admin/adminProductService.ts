@@ -11,6 +11,7 @@ export interface Category {
   isBestseller: boolean;
   hasWarning: boolean;
   groupCategory?: string;
+  commissionRate?: number;
   totalSubcategories?: number;
   status: "Active" | "Inactive";
   parentId?: string | null;
@@ -34,12 +35,13 @@ export interface CreateCategoryData {
   isBestseller?: boolean;
   hasWarning?: boolean;
   groupCategory?: string;
+  commissionRate?: number;
   parentId?: string | null;
   headerCategoryId?: string | null;
   status?: "Active" | "Inactive";
 }
 
-export interface UpdateCategoryData extends Partial<CreateCategoryData> {}
+export interface UpdateCategoryData extends Partial<CreateCategoryData> { }
 
 export interface BulkDeleteData {
   categoryIds: string[];
@@ -64,6 +66,7 @@ export interface SubCategory {
   category: string | Category;
   image?: string;
   order: number;
+  commissionRate?: number;
   totalProduct?: number; // Total products in this subcategory
   createdAt?: string;
   updatedAt?: string;
@@ -74,6 +77,7 @@ export interface CreateSubCategoryData {
   category: string;
   image?: string;
   order?: number;
+  commissionRate?: number;
 }
 
 // ==================== Seller Interfaces ====================

@@ -6,6 +6,7 @@ import { useOrders } from "../../hooks/useOrders";
 import { useLocation as useLocationContext } from "../../hooks/useLocation";
 import { useToast } from "../../context/ToastContext";
 import { useAuth } from "../../context/AuthContext";
+import RazorpayCheckout from "../../components/RazorpayCheckout";
 
 // import { products } from '../../data/products'; // Removed
 import { OrderAddress, Order } from "../../types/order";
@@ -46,6 +47,7 @@ export default function Checkout() {
     clearCart,
     addToCart,
     removeFromCart,
+    refreshCart,
     loading: cartLoading,
   } = useCart();
   const { addOrder } = useOrders();
@@ -60,6 +62,13 @@ export default function Checkout() {
   const [selectedAddress, setSelectedAddress] = useState<OrderAddress | null>(
     null
   );
+
+  // Recalculate delivery charges when address changes
+  useEffect(() => {
+    if (selectedAddress?.latitude && selectedAddress?.longitude) {
+      refreshCart(selectedAddress.latitude, selectedAddress.longitude);
+    }
+  }, [selectedAddress?.id, selectedAddress?.latitude, selectedAddress?.longitude]);
   const [showCouponSheet, setShowCouponSheet] = useState(false);
   const [selectedCoupon, setSelectedCoupon] = useState<ApiCoupon | null>(null);
   const [showPartyPopper, setShowPartyPopper] = useState(false);
@@ -75,6 +84,9 @@ export default function Checkout() {
   const [gstin, setGstin] = useState<string>("");
   const [showCancellationPolicy, setShowCancellationPolicy] = useState(false);
   const [giftPackaging, setGiftPackaging] = useState<boolean>(false);
+  const [showRazorpayCheckout, setShowRazorpayCheckout] = useState(false);
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"COD" | "Online">("Online");
 
   // Profile completion modal state
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -170,7 +182,7 @@ export default function Checkout() {
               typeof product.categoryId === "string"
                 ? product.categoryId
                 : (product.categoryId as any)._id ||
-                  (product.categoryId as any).id;
+                (product.categoryId as any).id;
           }
 
           if (catId) {
@@ -249,9 +261,10 @@ export default function Checkout() {
     }, 0),
   };
 
+  const threshold = cart.freeDeliveryThreshold ?? appConfig.freeDeliveryThreshold;
   const amountNeededForFreeDelivery = Math.max(
     0,
-    appConfig.freeDeliveryThreshold - (displayCart.total || 0)
+    threshold - (displayCart.total || 0)
   );
   const cartItem = displayItems[0];
 
@@ -263,11 +276,8 @@ export default function Checkout() {
 
   const discountedTotal = displayCart.total;
   const savedAmount = itemsTotal - discountedTotal;
-  const handlingCharge = appConfig.platformFee;
-  const deliveryCharge =
-    displayCart.total >= appConfig.freeDeliveryThreshold
-      ? 0
-      : appConfig.deliveryFee;
+  const handlingCharge = cart.platformFee ?? appConfig.platformFee;
+  const deliveryCharge = cart.estimatedDeliveryFee ?? (displayCart.total >= threshold ? 0 : appConfig.deliveryFee);
 
   // Recalculate or use validated discount
   // If we have a selected coupon, we should re-validate if cart total changes,
@@ -307,11 +317,11 @@ export default function Checkout() {
   const grandTotal = Math.max(
     0,
     discountedTotal +
-      handlingCharge +
-      deliveryCharge +
-      finalTipAmount +
-      giftPackagingFee -
-      currentCouponDiscount
+    handlingCharge +
+    deliveryCharge +
+    finalTipAmount +
+    giftPackagingFee -
+    currentCouponDiscount
   );
 
   const handleApplyCoupon = async (coupon: ApiCoupon) => {
@@ -439,6 +449,7 @@ export default function Checkout() {
       },
       totalAmount: grandTotal,
       address: addressWithLocation,
+      paymentMethod: paymentMethod,
       status: "Placed",
       createdAt: new Date().toISOString(),
       tipAmount: finalTipAmount,
@@ -450,9 +461,14 @@ export default function Checkout() {
     try {
       const placedId = await addOrder(order);
       if (placedId) {
-        setPlacedOrderId(placedId);
-        clearCart();
-        setShowOrderSuccess(true);
+        if (paymentMethod === "Online") {
+          setPendingOrderId(placedId);
+          setShowRazorpayCheckout(true);
+        } else {
+          setPlacedOrderId(placedId);
+          clearCart();
+          setShowOrderSuccess(true);
+        }
       }
     } catch (error: any) {
       console.error("Order placement failed", error);
@@ -565,7 +581,7 @@ export default function Checkout() {
     } catch (error: any) {
       setProfileError(
         error.response?.data?.message ||
-          "Failed to update profile. Please try again."
+        "Failed to update profile. Please try again."
       );
     } finally {
       setIsUpdatingProfile(false);
@@ -663,13 +679,12 @@ export default function Checkout() {
                       !profileFormData.name.trim() ||
                       !profileFormData.email.trim()
                     }
-                    className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
-                      isUpdatingProfile ||
+                    className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors ${isUpdatingProfile ||
                       !profileFormData.name.trim() ||
                       !profileFormData.email.trim()
-                        ? "bg-neutral-300 text-neutral-500 cursor-not-allowed"
-                        : "bg-green-600 text-white hover:bg-green-700"
-                    }`}>
+                      ? "bg-neutral-300 text-neutral-500 cursor-not-allowed"
+                      : "bg-green-600 text-white hover:bg-green-700"
+                      }`}>
                     {isUpdatingProfile ? "Saving..." : "Save & Continue"}
                   </button>
                 </div>
@@ -776,9 +791,8 @@ export default function Checkout() {
                     "#8b5cf6",
                     "#ec4899",
                   ][Math.floor(Math.random() * 6)],
-                  animation: `confettiFall ${2 + Math.random() * 2}s linear ${
-                    Math.random() * 2
-                  }s infinite`,
+                  animation: `confettiFall ${2 + Math.random() * 2}s linear ${Math.random() * 2
+                    }s infinite`,
                   transform: `rotate(${Math.random() * 360}deg)`,
                 }}
               />
@@ -937,11 +951,10 @@ export default function Checkout() {
           </div>
 
           <div
-            className={`border rounded-lg p-2.5 cursor-pointer transition-all ${
-              selectedAddress && !isMapSelected
-                ? "border-green-600 bg-green-50"
-                : "border-neutral-300 bg-white"
-            }`}
+            className={`border rounded-lg p-2.5 cursor-pointer transition-all ${selectedAddress && !isMapSelected
+              ? "border-green-600 bg-green-50"
+              : "border-neutral-300 bg-white"
+              }`}
             onClick={() => {
               setSelectedAddress(savedAddress);
               setIsMapSelected(false);
@@ -950,11 +963,10 @@ export default function Checkout() {
               <div className="flex-1">
                 <div className="flex items-center gap-1.5 mb-1">
                   <div
-                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                      selectedAddress && !isMapSelected
-                        ? "border-green-600 bg-green-600"
-                        : "border-neutral-400"
-                    }`}>
+                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${selectedAddress && !isMapSelected
+                      ? "border-green-600 bg-green-600"
+                      : "border-neutral-400"
+                      }`}>
                     {selectedAddress && !isMapSelected && (
                       <svg
                         width="10"
@@ -1021,11 +1033,10 @@ export default function Checkout() {
                 });
                 setShowMapPicker(true);
               }}
-              className={`flex items-center gap-3 text-base font-bold px-5 py-4 rounded-xl w-full justify-center transition-colors ${
-                isMapSelected
-                  ? "text-green-700 bg-green-100 border-2 border-green-500 ring-2 ring-green-600"
-                  : "text-green-600 hover:text-green-700 bg-green-50 border-2 border-green-300 hover:bg-green-100 hover:border-green-400"
-              }`}>
+              className={`flex items-center gap-3 text-base font-bold px-5 py-4 rounded-xl w-full justify-center transition-colors ${isMapSelected
+                ? "text-green-700 bg-green-100 border-2 border-green-500 ring-2 ring-green-600"
+                : "text-green-600 hover:text-green-700 bg-green-50 border-2 border-green-300 hover:bg-green-100 hover:border-green-400"
+                }`}>
               {isMapSelected ? (
                 <svg
                   width="24"
@@ -1066,8 +1077,8 @@ export default function Checkout() {
               {isMapSelected
                 ? "Precise Location Selected"
                 : selectedAddress?.latitude
-                ? "Update Precise Location on Map"
-                : "Set Exact Location on Map"}
+                  ? "Update Precise Location on Map"
+                  : "Set Exact Location on Map"}
             </button>
           </div>
         </div>
@@ -1420,8 +1431,7 @@ export default function Checkout() {
                     <div
                       onClick={() =>
                         navigate(
-                          `/category/${
-                            product.categoryId || product.category || "all"
+                          `/category/${product.categoryId || product.category || "all"
                           }`
                         )
                       }
@@ -1487,7 +1497,7 @@ export default function Checkout() {
                 </svg>
               </div>
               <p className="text-[10px] text-blue-600 mt-0.5">
-                Add products worth ₹{amountNeededForFreeDelivery} more
+                Add products worth ₹{amountNeededForFreeDelivery.toLocaleString('en-IN')} more
               </p>
             </div>
           </div>
@@ -1641,19 +1651,13 @@ export default function Checkout() {
             </div>
             <div className="flex flex-col items-end">
               <span
-                className={`text-xs font-medium ${
-                  deliveryCharge === 0 ? "text-green-600" : "text-neutral-900"
-                }`}>
+                className={`text-xs font-medium ${deliveryCharge === 0 ? "text-green-600" : "text-neutral-900"
+                  }`}>
                 {deliveryCharge === 0 ? "FREE" : `₹${deliveryCharge}`}
               </span>
               {deliveryCharge > 0 && (
                 <span className="text-[10px] text-orange-600 mt-0.5">
-                  Shop for ₹
-                  {Math.max(
-                    0,
-                    appConfig.freeDeliveryThreshold - displayCart.total
-                  )}{" "}
-                  more to get FREE delivery
+                  Shop for ₹{amountNeededForFreeDelivery} more to get FREE delivery
                 </span>
               )}
             </div>
@@ -1808,11 +1812,10 @@ export default function Checkout() {
               setTipAmount(20);
               setShowCustomTipInput(false);
             }}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-lg border-2 font-medium text-xs ${
-              tipAmount === 20 && !showCustomTipInput
-                ? "border-green-600 bg-green-50 text-green-700"
-                : "border-neutral-300 bg-white text-neutral-700"
-            }`}>
+            className={`flex-shrink-0 px-3 py-1.5 rounded-lg border-2 font-medium text-xs ${tipAmount === 20 && !showCustomTipInput
+              ? "border-green-600 bg-green-50 text-green-700"
+              : "border-neutral-300 bg-white text-neutral-700"
+              }`}>
             😊 ₹20
           </button>
           <button
@@ -1820,11 +1823,10 @@ export default function Checkout() {
               setTipAmount(30);
               setShowCustomTipInput(false);
             }}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-lg border-2 font-medium text-xs ${
-              tipAmount === 30 && !showCustomTipInput
-                ? "border-green-600 bg-green-50 text-green-700"
-                : "border-neutral-300 bg-white text-neutral-700"
-            }`}>
+            className={`flex-shrink-0 px-3 py-1.5 rounded-lg border-2 font-medium text-xs ${tipAmount === 30 && !showCustomTipInput
+              ? "border-green-600 bg-green-50 text-green-700"
+              : "border-neutral-300 bg-white text-neutral-700"
+              }`}>
             🤩 ₹30
           </button>
           <button
@@ -1832,11 +1834,10 @@ export default function Checkout() {
               setTipAmount(50);
               setShowCustomTipInput(false);
             }}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-lg border-2 font-medium text-xs ${
-              tipAmount === 50 && !showCustomTipInput
-                ? "border-green-600 bg-green-50 text-green-700"
-                : "border-neutral-300 bg-white text-neutral-700"
-            }`}>
+            className={`flex-shrink-0 px-3 py-1.5 rounded-lg border-2 font-medium text-xs ${tipAmount === 50 && !showCustomTipInput
+              ? "border-green-600 bg-green-50 text-green-700"
+              : "border-neutral-300 bg-white text-neutral-700"
+              }`}>
             😍 ₹50
           </button>
           <button
@@ -1844,11 +1845,10 @@ export default function Checkout() {
               setShowCustomTipInput(true);
               setTipAmount(null);
             }}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-lg border-2 font-medium text-xs ${
-              showCustomTipInput
-                ? "border-green-600 bg-green-50 text-green-700"
-                : "border-neutral-300 bg-white text-neutral-700"
-            }`}>
+            className={`flex-shrink-0 px-3 py-1.5 rounded-lg border-2 font-medium text-xs ${showCustomTipInput
+              ? "border-green-600 bg-green-50 text-green-700"
+              : "border-neutral-300 bg-white text-neutral-700"
+              }`}>
             🎁 Custom
           </button>
         </div>
@@ -1893,18 +1893,16 @@ export default function Checkout() {
       <div className="px-4 py-2 border-b border-neutral-200">
         <button
           onClick={() => setGiftPackaging(!giftPackaging)}
-          className={`w-full flex items-center justify-between rounded-lg p-2 transition-colors ${
-            giftPackaging
-              ? "bg-green-50 border-2 border-green-600"
-              : "bg-neutral-50 border-2 border-transparent hover:bg-neutral-100"
-          }`}>
+          className={`w-full flex items-center justify-between rounded-lg p-2 transition-colors ${giftPackaging
+            ? "bg-green-50 border-2 border-green-600"
+            : "bg-neutral-50 border-2 border-transparent hover:bg-neutral-100"
+            }`}>
           <div className="flex items-center gap-2">
             <div
-              className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
-                giftPackaging
-                  ? "border-green-600 bg-green-600"
-                  : "border-neutral-400 bg-white"
-              }`}>
+              className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${giftPackaging
+                ? "border-green-600 bg-green-600"
+                : "border-neutral-400 bg-white"
+                }`}>
               {giftPackaging && (
                 <svg
                   width="12"
@@ -1937,9 +1935,8 @@ export default function Checkout() {
             </svg>
             <div className="text-left">
               <p
-                className={`text-xs font-semibold ${
-                  giftPackaging ? "text-green-700" : "text-neutral-900"
-                }`}>
+                className={`text-xs font-semibold ${giftPackaging ? "text-green-700" : "text-neutral-900"
+                  }`}>
                 Gift Packaging
               </p>
               <p className="text-[10px] text-neutral-600">
@@ -2140,6 +2137,27 @@ export default function Checkout() {
         </SheetContent>
       </Sheet>
 
+      {/* Payment Method Selection */}
+      <div className="px-4 py-3 border-b border-neutral-200 bg-neutral-50/50">
+        <h3 className="text-sm font-bold text-neutral-900 mb-2">Payment Method</h3>
+        <div className="flex items-center gap-3 p-3 rounded-xl border-2 border-green-600 bg-green-50">
+          <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </div>
+          <div>
+            <span className="text-xs font-bold text-green-700 block">Online Payment</span>
+            <span className="text-[10px] text-green-600">Secure payment via Razorpay</span>
+          </div>
+          <div className="ml-auto">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
       {/* Coupon Sheet Modal */}
       <Sheet open={showCouponSheet} onOpenChange={setShowCouponSheet}>
         <SheetContent side="bottom" className="max-h-[85vh]">
@@ -2185,13 +2203,12 @@ export default function Checkout() {
                   return (
                     <div
                       key={coupon._id}
-                      className={`border-2 rounded-lg p-2.5 transition-all ${
-                        isSelected
-                          ? "border-green-600 bg-green-50"
-                          : meetsMinOrder
+                      className={`border-2 rounded-lg p-2.5 transition-all ${isSelected
+                        ? "border-green-600 bg-green-50"
+                        : meetsMinOrder
                           ? "border-neutral-200 bg-white"
                           : "border-neutral-200 bg-neutral-50 opacity-60"
-                      }`}>
+                        }`}>
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
@@ -2235,11 +2252,10 @@ export default function Checkout() {
                               meetsMinOrder && handleApplyCoupon(coupon)
                             }
                             disabled={!meetsMinOrder || isValidatingCoupon}
-                            className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                              meetsMinOrder
-                                ? "bg-green-600 text-white hover:bg-green-700"
-                                : "bg-neutral-300 text-neutral-500 cursor-not-allowed"
-                            }`}>
+                            className={`px-3 py-1 rounded text-xs font-medium transition-colors ${meetsMinOrder
+                              ? "bg-green-600 text-white hover:bg-green-700"
+                              : "bg-neutral-300 text-neutral-500 cursor-not-allowed"
+                              }`}>
                             {isValidatingCoupon ? "..." : "Apply"}
                           </button>
                         )}
@@ -2259,11 +2275,10 @@ export default function Checkout() {
           <button
             onClick={handlePlaceOrder}
             disabled={cart.items.length === 0}
-            className={`w-full py-3 px-4 font-bold text-sm uppercase tracking-wide transition-colors ${
-              cart.items.length > 0
-                ? "bg-green-600 text-white hover:bg-green-700"
-                : "bg-neutral-300 text-neutral-500 cursor-not-allowed"
-            }`}>
+            className={`w-full py-3 px-4 font-bold text-sm uppercase tracking-wide transition-colors ${cart.items.length > 0
+              ? "bg-green-600 text-white hover:bg-green-700"
+              : "bg-neutral-300 text-neutral-500 cursor-not-allowed"
+              }`}>
             Place Order
           </button>
         ) : (
@@ -2281,6 +2296,31 @@ export default function Checkout() {
         )}
       </div>
 
+      {/* Razorpay Checkout Modal */}
+      {showRazorpayCheckout && pendingOrderId && user && (
+        <RazorpayCheckout
+          orderId={pendingOrderId}
+          amount={grandTotal}
+          customerDetails={{
+            name: user.name || "Customer",
+            email: user.email || "",
+            phone: user.phone || "",
+          }}
+          onSuccess={(paymentId) => {
+            setShowRazorpayCheckout(false);
+            setPlacedOrderId(pendingOrderId);
+            setPendingOrderId(null);
+            clearCart();
+            setShowOrderSuccess(true);
+            showGlobalToast("Payment successful!", "success");
+          }}
+          onFailure={(error) => {
+            setShowRazorpayCheckout(false);
+            setPendingOrderId(null);
+            showGlobalToast(error || "Payment failed. Please try again.", "error");
+          }}
+        />
+      )}
       {/* Animation Styles */}
       <style>{`
         @keyframes fadeIn {

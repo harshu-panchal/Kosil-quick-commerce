@@ -1,9 +1,7 @@
 import Order from "../models/Order";
 import { IOrderItem } from "../models/OrderItem";
 import Inventory from "../models/Inventory";
-import Commission from "../models/Commission";
-import Seller from "../models/Seller";
-import WalletTransaction from "../models/WalletTransaction";
+import { distributeCommissions } from "./commissionService";
 import { clearOrderCache } from "../socket/socketService";
 
 /**
@@ -40,8 +38,8 @@ export const processOrderStatusTransition = async (
       break;
 
     case "Delivered":
-      // Create commissions for sellers
-      await createCommissions(order.items as any[]);
+      // Create commissions for sellers and delivery boys
+      await distributeCommissions(orderId);
       break;
   }
 
@@ -80,82 +78,6 @@ const restoreInventory = async (items: IOrderItem[]) => {
         inventory.currentStock - inventory.reservedStock;
       await inventory.save();
     }
-  }
-};
-
-/**
- * Create commissions for sellers when order is delivered
- * Also updates seller balances and creates wallet transactions
- */
-const createCommissions = async (items: IOrderItem[]) => {
-  // Group items by seller to aggregate earnings
-  const sellerEarningsMap = new Map<string, {
-    totalAmount: number;
-    commissionAmount: number;
-    netEarning: number;
-    items: IOrderItem[];
-  }>();
-
-  // First pass: calculate commissions and aggregate by seller
-  for (const item of items) {
-    const sellerId = item.seller.toString();
-    const seller = await Seller.findById(item.seller);
-
-    if (!seller) continue;
-
-    const commissionRate = seller.commission || 0;
-    const commissionAmount = (item.total * commissionRate) / 100;
-    const netEarning = item.total - commissionAmount;
-
-    // Create commission record
-    await Commission.create({
-      order: item.order,
-      orderItem: item._id,
-      seller: item.seller,
-      orderAmount: item.total,
-      commissionRate,
-      commissionAmount,
-      status: "Pending",
-    });
-
-    // Aggregate earnings by seller
-    if (!sellerEarningsMap.has(sellerId)) {
-      sellerEarningsMap.set(sellerId, {
-        totalAmount: 0,
-        commissionAmount: 0,
-        netEarning: 0,
-        items: [],
-      });
-    }
-
-    const sellerData = sellerEarningsMap.get(sellerId)!;
-    sellerData.totalAmount += item.total;
-    sellerData.commissionAmount += commissionAmount;
-    sellerData.netEarning += netEarning;
-    sellerData.items.push(item);
-  }
-
-  // Second pass: update seller balances and create wallet transactions
-  for (const [sellerId, earnings] of sellerEarningsMap.entries()) {
-    const seller = await Seller.findById(sellerId);
-    if (!seller) continue;
-
-    // Update seller balance
-    seller.balance = (seller.balance || 0) + earnings.netEarning;
-    await seller.save();
-
-    // Create wallet transaction
-    const order = await Order.findById(items[0].order);
-    const orderNumber = order?.orderNumber || `ORDER-${items[0].order}`;
-
-    await WalletTransaction.create({
-      sellerId: seller._id,
-      amount: earnings.netEarning,
-      type: 'Credit',
-      description: `Earnings from Order #${orderNumber}`,
-      reference: `ORD-${items[0].order}-${Date.now()}-${sellerId}`,
-      status: 'Completed',
-    });
   }
 };
 

@@ -214,11 +214,7 @@ export const updateOrderStatus = asyncHandler(async (req: Request, res: Response
             });
         }
 
-        // COMMISSION LOGIC (Fixed mock amount for now, should be dynamic in future)
-        const COMMISSION = 40;
-        await Delivery.findByIdAndUpdate(deliveryId, {
-            $inc: { balance: COMMISSION }
-        });
+
     }
 
     await order.save();
@@ -436,11 +432,7 @@ export const verifyDeliveryOtpController = asyncHandler(async (req: Request, res
                 });
             }
 
-            // Update delivery boy commission
-            const COMMISSION = 40; // Fixed amount for now, should be dynamic in future
-            await Delivery.findByIdAndUpdate(deliveryId, {
-                $inc: { balance: COMMISSION }
-            });
+
 
             // Emit socket events for real-time status update
             const io = (req.app as any).get("io");

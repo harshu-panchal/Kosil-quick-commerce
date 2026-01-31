@@ -6,6 +6,7 @@ import {
 } from "../../services/api/auth/customerAuthService";
 import { useAuth } from "../../context/AuthContext";
 import OTPInput from "../../components/OTPInput";
+import { registerFCMToken } from "../../services/pushNotificationService";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ export default function Login() {
     } catch (err: any) {
       setError(
         err.response?.data?.message ||
-          "Failed to initiate call. Please try again."
+        "Failed to initiate call. Please try again."
       );
     } finally {
       setLoading(false);
@@ -57,6 +58,14 @@ export default function Login() {
           refCode: response.data.user.refCode,
           status: response.data.user.status,
         });
+
+        // Register FCM token
+        try {
+          await registerFCMToken(true);
+        } catch (e) {
+          console.error("Failed to register FCM token on login", e);
+        }
+
         navigate("/");
       }
     } catch (err: any) {
@@ -216,11 +225,10 @@ export default function Login() {
               <button
                 onClick={handleContinue}
                 disabled={mobileNumber.length !== 10 || loading}
-                className={`w-full py-2 sm:py-2.5 rounded-lg font-semibold text-sm transition-colors border px-3 ${
-                  mobileNumber.length === 10 && !loading
-                    ? "bg-orange-50 text-orange-600 border-orange-500 hover:bg-orange-100"
-                    : "bg-neutral-300 text-neutral-500 cursor-not-allowed border-neutral-300"
-                }`}>
+                className={`w-full py-2 sm:py-2.5 rounded-lg font-semibold text-sm transition-colors border px-3 ${mobileNumber.length === 10 && !loading
+                  ? "bg-orange-50 text-orange-600 border-orange-500 hover:bg-orange-100"
+                  : "bg-neutral-300 text-neutral-500 cursor-not-allowed border-neutral-300"
+                  }`}>
                 {loading ? "Calling..." : "Continue"}
               </button>
             </div>

@@ -27,6 +27,7 @@ export default function AdminSubCategory() {
   const [subcategoryImagePreview, setSubcategoryImagePreview] =
     useState<string>("");
   const [subcategoryImageUrl, setSubcategoryImageUrl] = useState<string>("");
+  const [commissionRate, setCommissionRate] = useState<number>(0);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -74,7 +75,7 @@ export default function AdminSubCategory() {
           };
           setError(
             axiosError.response?.data?.message ||
-              "Failed to load data. Please try again."
+            "Failed to load data. Please try again."
           );
         } else {
           setError("Failed to load data. Please try again.");
@@ -156,6 +157,7 @@ export default function AdminSubCategory() {
         name: subcategoryName.trim(),
         category: selectedCategory,
         image: imageUrl,
+        commissionRate: commissionRate,
       };
 
       if (editingId) {
@@ -183,6 +185,7 @@ export default function AdminSubCategory() {
       setSubcategoryImageFile(null);
       setSubcategoryImagePreview("");
       setSubcategoryImageUrl("");
+      setCommissionRate(0);
     } catch (error) {
       if (error && typeof error === "object" && "response" in error) {
         const axiosError = error as {
@@ -190,7 +193,7 @@ export default function AdminSubCategory() {
         };
         setUploadError(
           axiosError.response?.data?.message ||
-            "Failed to save subcategory. Please try again."
+          "Failed to save subcategory. Please try again."
         );
       } else {
         setUploadError("Failed to save subcategory. Please try again.");
@@ -211,6 +214,7 @@ export default function AdminSubCategory() {
       setSelectedCategory(categoryId);
       setSubcategoryName(subCategory.name);
       setSubcategoryImageUrl(subCategory.image || "");
+      setCommissionRate(subCategory.commissionRate || 0);
     }
   };
 
@@ -229,7 +233,7 @@ export default function AdminSubCategory() {
           };
           alert(
             axiosError.response?.data?.message ||
-              "Failed to delete subcategory. Please try again."
+            "Failed to delete subcategory. Please try again."
           );
         } else {
           alert("Failed to delete subcategory. Please try again.");
@@ -303,6 +307,28 @@ export default function AdminSubCategory() {
               />
             </div>
 
+            {/* Commission Rate */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                Commission Rate (%):
+              </label>
+              <input
+                type="number"
+                value={commissionRate}
+                onChange={(e) => setCommissionRate(Number(e.target.value))}
+                placeholder="0"
+                min="0"
+                max="100"
+                step="0.01"
+                className="w-full px-3 py-2 border border-neutral-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+                disabled={uploading}
+              />
+              <p className="mt-1 text-xs text-neutral-500">
+                Default commission rate for products in this subcategory (0 =
+                use seller default)
+              </p>
+            </div>
+
             {/* SubCategory Image */}
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">
@@ -362,16 +388,15 @@ export default function AdminSubCategory() {
             <button
               onClick={handleAddSubCategory}
               disabled={uploading}
-              className={`w-full py-2.5 rounded text-sm font-medium transition-colors ${
-                uploading
+              className={`w-full py-2.5 rounded text-sm font-medium transition-colors ${uploading
                   ? "bg-neutral-400 cursor-not-allowed text-white"
                   : "bg-teal-600 hover:bg-teal-700 text-white"
-              }`}>
+                }`}>
               {uploading
                 ? "Saving..."
                 : editingId
-                ? "Update SubCategory"
-                : "Add SubCategory"}
+                  ? "Update SubCategory"
+                  : "Add SubCategory"}
             </button>
             {editingId && (
               <button
@@ -382,6 +407,7 @@ export default function AdminSubCategory() {
                   setSubcategoryImageFile(null);
                   setSubcategoryImagePreview("");
                   setSubcategoryImageUrl("");
+                  setCommissionRate(0);
                 }}
                 className="w-full py-2.5 rounded text-sm font-medium bg-neutral-200 hover:bg-neutral-300 text-neutral-700 transition-colors mt-2">
                 Cancel Edit
@@ -595,7 +621,7 @@ export default function AdminSubCategory() {
                       typeof subCategory.category === "object"
                         ? subCategory.category.name
                         : categories.find((c) => c._id === subCategory.category)
-                            ?.name || "Unknown";
+                          ?.name || "Unknown";
                     return (
                       <tr key={subCategory._id} className="hover:bg-neutral-50">
                         <td className="px-4 sm:px-6 py-3 text-sm text-neutral-900">
@@ -686,11 +712,10 @@ export default function AdminSubCategory() {
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className={`p-2 border border-neutral-300 rounded ${
-                  currentPage === 1
+                className={`p-2 border border-neutral-300 rounded ${currentPage === 1
                     ? "text-neutral-400 cursor-not-allowed bg-neutral-50"
                     : "text-neutral-700 hover:bg-neutral-50"
-                }`}
+                  }`}
                 aria-label="Previous page">
                 <svg
                   width="16"
@@ -712,11 +737,10 @@ export default function AdminSubCategory() {
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-1 border border-neutral-300 rounded text-sm ${
-                      currentPage === page
+                    className={`px-3 py-1 border border-neutral-300 rounded text-sm ${currentPage === page
                         ? "bg-teal-600 text-white border-teal-600"
                         : "text-neutral-700 hover:bg-neutral-50"
-                    }`}>
+                      }`}>
                     {page}
                   </button>
                 )
@@ -726,11 +750,10 @@ export default function AdminSubCategory() {
                   setCurrentPage((prev) => Math.min(totalPages, prev + 1))
                 }
                 disabled={currentPage === totalPages || totalPages === 0}
-                className={`p-2 border border-neutral-300 rounded ${
-                  currentPage === totalPages || totalPages === 0
+                className={`p-2 border border-neutral-300 rounded ${currentPage === totalPages || totalPages === 0
                     ? "text-neutral-400 cursor-not-allowed bg-neutral-50"
                     : "text-neutral-700 hover:bg-neutral-50"
-                }`}
+                  }`}
                 aria-label="Next page">
                 <svg
                   width="16"

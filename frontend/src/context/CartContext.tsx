@@ -26,6 +26,7 @@ interface CartContextType {
   removeFromCart: (productId: string) => Promise<void>;
   updateQuantity: (productId: string, quantity: number, variantId?: string, variantTitle?: string) => Promise<void>;
   clearCart: () => Promise<void>;
+  refreshCart: (latitude?: number, longitude?: number) => Promise<void>;
   lastAddEvent: AddToCartEvent | null;
   loading: boolean;
 }
@@ -60,6 +61,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const { location } = useLocation();
   const { showToast } = useToast();
 
+  // State for estimate delivery fee
+  const [estimatedFee, setEstimatedFee] = useState<number | undefined>(undefined);
+  const [platformFee, setPlatformFee] = useState<number | undefined>(undefined);
+  const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState<number | undefined>(undefined);
+
   // Helper to map API cart items to internal CartItem structure
   const mapApiItemsToState = (apiItems: any[]): ExtendedCartItem[] => {
     return apiItems
@@ -90,31 +96,38 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items]);
 
   // Helper to sync cart from API
-  const fetchCart = async () => {
+  const fetchCart = async (lat?: number, lng?: number) => {
     if (!isAuthenticated || user?.userType !== 'Customer') {
-      // If we cleared it above but had things in localStorage, we keep them for guests?
-      // For now, if logged out, we clear if it was an authenticated session.
-      // But if guest, we might want to keep it.
-      // Let's only clear if we are transition from logged in to logged out.
       setLoading(false);
       return;
     }
 
     try {
       const response = await getCart({
-        latitude: location?.latitude,
-        longitude: location?.longitude
+        latitude: lat ?? location?.latitude,
+        longitude: lng ?? location?.longitude
       });
       if (response && response.data && response.data.items) {
         setItems(mapApiItemsToState(response.data.items));
+        setEstimatedFee(response.data.estimatedDeliveryFee);
+        setPlatformFee(response.data.platformFee);
+        setFreeDeliveryThreshold(response.data.freeDeliveryThreshold);
       } else {
         setItems([]);
+        setEstimatedFee(undefined);
+        setPlatformFee(undefined);
+        setFreeDeliveryThreshold(undefined);
       }
     } catch (error) {
       console.error("Failed to fetch cart:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const refreshCart = async (latitude?: number, longitude?: number) => {
+    setLoading(true); // Optional: Set loading state if you want to show spinner
+    await fetchCart(latitude, longitude);
   };
 
   // Load cart on auth change
@@ -135,8 +148,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return sum + displayPrice * (item.quantity || 0);
     }, 0);
     const itemCount = validItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
-    return { items: validItems, total, itemCount };
-  }, [items]);
+    return {
+      items: validItems,
+      total,
+      itemCount,
+      estimatedDeliveryFee: estimatedFee,
+      platformFee,
+      freeDeliveryThreshold
+    };
+  }, [items, estimatedFee, platformFee, freeDeliveryThreshold]);
 
   const addToCart = async (product: Product, sourceElement?: HTMLElement | null) => {
     // Get consistent product ID - MongoDB returns _id, frontend expects id
@@ -188,7 +208,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         // If both have variants, match by variant ID or title
         if (variantId || variantTitle) {
           return itemProductId === productId &&
-                 (itemVariantId === variantId || itemVariantTitle === variantTitle);
+            (itemVariantId === variantId || itemVariantTitle === variantTitle);
         }
         // If no variant, match by product ID only
         return itemProductId === productId && !itemVariantId && !itemVariantTitle;
@@ -228,6 +248,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         if (response && response.data && response.data.items) {
           // Atomic update from server response
           setItems(mapApiItemsToState(response.data.items));
+          setEstimatedFee(response.data.estimatedDeliveryFee);
+          setPlatformFee(response.data.platformFee);
+          setFreeDeliveryThreshold(response.data.freeDeliveryThreshold);
         }
       } catch (error: any) {
         console.error("Add to cart failed", error);
@@ -269,6 +292,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         );
         if (response && response.data && response.data.items) {
           setItems(mapApiItemsToState(response.data.items));
+          setEstimatedFee(response.data.estimatedDeliveryFee);
+          setPlatformFee(response.data.platformFee);
+          setFreeDeliveryThreshold(response.data.freeDeliveryThreshold);
         }
       } catch (error) {
         console.error("Remove from cart failed", error);
@@ -353,6 +379,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         );
         if (response && response.data && response.data.items) {
           setItems(mapApiItemsToState(response.data.items));
+          setEstimatedFee(response.data.estimatedDeliveryFee);
+          setPlatformFee(response.data.platformFee);
+          setFreeDeliveryThreshold(response.data.freeDeliveryThreshold);
         }
       } catch (error) {
         console.error("Update quantity failed", error);
@@ -380,7 +409,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   return (
     <CartContext.Provider
-      value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, lastAddEvent, loading }}
+      value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, refreshCart, lastAddEvent, loading }}
     >
       {children}
     </CartContext.Provider>

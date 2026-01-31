@@ -15,9 +15,12 @@ import productRoutes from "./productRoutes";
 import headerCategoryRoutes from "./headerCategoryRoutes";
 import categoryRoutes from "./categoryRoutes";
 import orderRoutes from "./orderRoutes";
+import fcmTokenRoutes from "./fcmTokenRoutes";
 import returnRoutes from "./returnRoutes";
 import reportRoutes from "./reportRoutes";
-import walletRoutes from "./walletRoutes";
+import adminWithdrawalRoutes from "./adminWithdrawalRoutes";
+import deliveryWalletRoutes from "./deliveryWalletRoutes";
+import sellerWalletRoutes from "./sellerWalletRoutes";
 import taxRoutes from "./taxRoutes";
 import customerProductRoutes from "./customerProductRoutes";
 import customerCategoryRoutes from "./customerCategoryRoutes";
@@ -31,6 +34,7 @@ import adminRoutes from "./adminRoutes";
 import customerTrackingRoutes from "../modules/customer/routes/trackingRoutes";
 import deliveryTrackingRoutes from "../modules/delivery/routes/trackingRoutes";
 import customerBannerRoutes from "./customerBannerRoutes";
+import paymentRoutes from "./paymentRoutes";
 import {
   createOrder,
   getMyOrders,
@@ -69,6 +73,10 @@ router.use(
   requireUserType("Delivery"),
   deliveryTrackingRoutes
 );
+router.use(
+  "/delivery/wallet",
+  deliveryWalletRoutes
+);
 
 // Customer routes - Specific routes MUST be registered before general /customer route
 // to prevent Express from matching the broader route first
@@ -104,6 +112,9 @@ router.use("/customer/reviews", productReviewRoutes);
 // General customer route (must be last to avoid intercepting specific routes)
 router.use("/customer", customerRoutes);
 
+// Payment routes
+router.use("/payment", paymentRoutes);
+
 // Seller dashboard routes
 router.use("/seller/dashboard", dashboardRoutes);
 
@@ -115,6 +126,10 @@ router.use("/banners", customerBannerRoutes);
 
 // Admin routes (protected, admin only)
 router.use("/admin", adminRoutes);
+router.use("/admin", adminWithdrawalRoutes);
+
+// FCM Token Routes
+router.use("/fcm-tokens", fcmTokenRoutes);
 
 // Upload routes (protected)
 router.use("/upload", uploadRoutes);
@@ -138,7 +153,7 @@ router.use("/returns", returnRoutes);
 router.use("/seller/reports", reportRoutes);
 
 // Wallet routes (protected, seller only)
-router.use("/seller/wallet", walletRoutes);
+router.use("/seller/wallet", sellerWalletRoutes);
 
 // Tax routes (protected, seller/admin)
 router.use("/seller/taxes", taxRoutes);

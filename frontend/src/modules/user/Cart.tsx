@@ -8,8 +8,9 @@ export default function Cart() {
   const { cart, updateQuantity, removeFromCart, clearCart } = useCart();
   const navigate = useNavigate();
 
-  const deliveryFee = cart.total >= appConfig.freeDeliveryThreshold ? 0 : appConfig.deliveryFee;
-  const platformFee = appConfig.platformFee;
+  const threshold = cart.freeDeliveryThreshold ?? appConfig.freeDeliveryThreshold;
+  const deliveryFee = cart.estimatedDeliveryFee ?? (cart.total >= threshold ? 0 : appConfig.deliveryFee);
+  const platformFee = cart.platformFee ?? appConfig.platformFee;
   const totalAmount = cart.total + deliveryFee + platformFee;
 
   const handleCheckout = () => {
@@ -153,9 +154,9 @@ export default function Cart() {
                 {deliveryFee === 0 ? 'Free' : `₹${deliveryFee.toLocaleString('en-IN')}`}
               </span>
             </div>
-            {cart.total < appConfig.freeDeliveryThreshold && (
+            {cart.total < threshold && (
               <div className="text-xs md:text-sm text-green-600 bg-green-50 px-2 py-1 rounded">
-                Add ₹{(appConfig.freeDeliveryThreshold - cart.total).toLocaleString('en-IN')} more for free delivery
+                Add ₹{(threshold - cart.total).toLocaleString('en-IN')} more for free delivery
               </div>
             )}
           </div>

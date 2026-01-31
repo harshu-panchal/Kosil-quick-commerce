@@ -26,6 +26,7 @@ export const createCategory = asyncHandler(
       parentId,
       headerCategoryId,
       status = "Active",
+      commissionRate = 0,
     } = req.body;
 
     if (!name) {
@@ -126,6 +127,7 @@ export const createCategory = asyncHandler(
       parentId: parentId || null,
       headerCategoryId: finalHeaderCategoryId || null,
       status,
+      commissionRate,
     });
 
     // Invalidate category caches
@@ -556,7 +558,7 @@ export const bulkDeleteCategories = asyncHandler(
  */
 export const createSubCategory = asyncHandler(
   async (req: Request, res: Response) => {
-    const { name, category, image, order } = req.body;
+    const { name, category, image, order, commissionRate } = req.body;
 
     if (!name || !category) {
       return res.status(400).json({
@@ -570,6 +572,7 @@ export const createSubCategory = asyncHandler(
       category,
       image,
       order: order || 0,
+      commissionRate: commissionRate || 0,
     });
 
     // Update category subcategory count
@@ -1124,9 +1127,8 @@ export const approveProductRequest = asyncHandler(
 
     return res.status(200).json({
       success: true,
-      message: `Product ${
-        status === "Active" ? "approved" : "rejected"
-      } successfully`,
+      message: `Product ${status === "Active" ? "approved" : "rejected"
+        } successfully`,
       data: product,
     });
   }

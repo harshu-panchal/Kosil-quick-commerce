@@ -27,6 +27,7 @@ import * as notificationController from "../modules/admin/controllers/adminNotif
 
 // Wallet Controllers
 import * as walletController from "../modules/admin/controllers/adminWalletController";
+import * as withdrawalController from "../modules/admin/controllers/adminWithdrawalController";
 
 // Tax Controllers
 import * as taxController from "../modules/admin/controllers/adminTaxController";
@@ -236,22 +237,17 @@ router.patch(
   notificationController.markMultipleAsRead,
 ); // Legacy support
 
-// ==================== Wallet Routes ====================
-router.get("/wallet/transactions", walletController.getWalletTransactions);
-router.post("/wallet/transfer", walletController.processFundTransfer);
-router.get("/wallet/seller/:sellerId", walletController.getSellerTransactions);
-router.post("/wallet/withdrawal", walletController.processWithdrawal);
-
-// ==================== Financial Dashboard Routes ====================
+// ==================== Wallet & Withdrawal Routes ====================
 router.get("/financial/dashboard", walletController.getFinancialDashboard);
-router.get(
-  "/financial/order-transactions",
-  walletController.getAllOrderTransactions,
-);
-router.get(
-  "/financial/delivery-charges",
-  walletController.getDeliveryChargesReport,
-);
+router.get("/wallet/earnings", walletController.getAdminEarnings);
+router.get("/wallet/transactions", walletController.getWalletTransactions);
+router.get("/wallet/withdrawals", withdrawalController.getAllWithdrawals);
+router.post("/wallet/withdrawal/process", walletController.processWithdrawalWrapper);
+
+// Direct withdrawal routes (if used elsewhere)
+router.put("/withdrawals/:id/approve", withdrawalController.approveWithdrawal);
+router.put("/withdrawals/:id/reject", withdrawalController.rejectWithdrawal);
+router.put("/withdrawals/:id/complete", withdrawalController.completeWithdrawal);
 
 // ==================== Tax Routes ====================
 router.get("/taxes", taxController.getTaxes);

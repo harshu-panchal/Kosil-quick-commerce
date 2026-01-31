@@ -7,7 +7,7 @@ export default function DeliveryMenu() {
 
   const menuItems = [
     { id: 'menu-1', title: 'Profile', route: '/delivery/profile' },
-    { id: 'menu-2', title: 'Earnings', route: '/delivery/earnings' },
+    { id: 'menu-wallet', title: 'Wallet & Payouts', route: '/delivery/wallet' },
     { id: 'menu-3', title: 'Settings', route: '/delivery/settings' },
     { id: 'menu-4', title: 'Help & Support', route: '/delivery/help' },
     { id: 'menu-5', title: 'About', route: '/delivery/about' },
@@ -23,14 +23,7 @@ export default function DeliveryMenu() {
             <path d="M4 20c0-4 3.5-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" />
           </svg>
         );
-      case 'menu-2': // Earnings
-        return (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="6" width="20" height="12" rx="2" stroke="currentColor" strokeWidth="2" fill="none" />
-            <path d="M6 10H18M6 14H14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" />
-            <circle cx="16" cy="12" r="2" stroke="currentColor" strokeWidth="2" fill="none" />
-          </svg>
-        );
+
       case 'menu-3': // Settings
         return (
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

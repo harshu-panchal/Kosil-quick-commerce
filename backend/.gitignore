@@ -28,3 +28,7 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Firebase
+config/firebase-service-account.json
+*.json

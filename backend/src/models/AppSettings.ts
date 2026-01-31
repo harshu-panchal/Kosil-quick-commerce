@@ -26,6 +26,7 @@ export interface IAppSettings extends Document {
     wallet: boolean;
     upi: boolean;
   };
+  minimumWithdrawalAmount?: number;
   paymentGateways?: {
     razorpay?: {
       enabled: boolean;
@@ -49,11 +50,20 @@ export interface IAppSettings extends Document {
   };
 
   // Commission Settings
-  defaultCommission: number;
+  defaultCommission?: number;
 
   // Delivery Settings
+  platformFee?: number;
   deliveryCharges: number;
   freeDeliveryThreshold?: number;
+  deliveryConfig?: {
+    isDistanceBased: boolean;
+    googleMapsKey?: string;
+    baseCharge: number;
+    baseDistance: number;
+    kmRate: number;
+    deliveryBoyKmRate?: number;
+  };
 
   // Tax Settings
   gstEnabled: boolean;
@@ -104,6 +114,11 @@ export interface IAppSettings extends Document {
 
   createdAt: Date;
   updatedAt: Date;
+}
+
+// Extension for static methods
+export interface IAppSettingsModel extends mongoose.Model<IAppSettings> {
+  getSettings(): Promise<IAppSettings>;
 }
 
 const AppSettingsSchema = new Schema<IAppSettings>(
@@ -186,14 +201,19 @@ const AppSettingsSchema = new Schema<IAppSettings>(
         default: true,
       },
     },
+    minimumWithdrawalAmount: {
+      type: Number,
+      default: 100,
+      min: [0, "Minimum withdrawal amount cannot be negative"],
+    },
     paymentGateways: {
       razorpay: {
-        enabled: Boolean,
+        enabled: { type: Boolean, default: false },
         keyId: String,
         keySecret: String,
       },
       stripe: {
-        enabled: Boolean,
+        enabled: { type: Boolean, default: false },
         publishableKey: String,
         secretKey: String,
       },
@@ -232,6 +252,11 @@ const AppSettingsSchema = new Schema<IAppSettings>(
     },
 
     // Delivery Settings
+    platformFee: {
+      type: Number,
+      default: 2,
+      min: [0, "Platform fee cannot be negative"],
+    },
     deliveryCharges: {
       type: Number,
       default: 0,
@@ -240,6 +265,14 @@ const AppSettingsSchema = new Schema<IAppSettings>(
     freeDeliveryThreshold: {
       type: Number,
       min: [0, "Free delivery threshold cannot be negative"],
+    },
+    deliveryConfig: {
+      isDistanceBased: { type: Boolean, default: false },
+      googleMapsKey: { type: String, trim: true },
+      baseCharge: { type: Number, default: 0 },
+      baseDistance: { type: Number, default: 0 },
+      kmRate: { type: Number, default: 0 },
+      deliveryBoyKmRate: { type: Number, default: 0 },
     },
 
     // Tax Settings
@@ -365,7 +398,7 @@ const AppSettingsSchema = new Schema<IAppSettings>(
 );
 
 // Ensure only one settings document exists
-AppSettingsSchema.statics.getSettings = async function () {
+AppSettingsSchema.statics.getSettings = async function (this: mongoose.Model<IAppSettings>) {
   let settings = await this.findOne();
   if (!settings) {
     settings = await this.create({
@@ -380,7 +413,7 @@ AppSettingsSchema.statics.getSettings = async function () {
 // Indexes
 AppSettingsSchema.index({ appName: 1 });
 
-const AppSettings = mongoose.model<IAppSettings>(
+const AppSettings = mongoose.model<IAppSettings, IAppSettingsModel>(
   "AppSettings",
   AppSettingsSchema
 );

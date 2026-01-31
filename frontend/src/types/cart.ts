@@ -10,5 +10,8 @@ export interface Cart {
   items: CartItem[];
   total: number;
   itemCount: number;
+  estimatedDeliveryFee?: number;
+  platformFee?: number;
+  freeDeliveryThreshold?: number;
 }
 

@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Suspense, lazy, startTransition } from "react";
+import { Suspense, lazy, startTransition, useEffect } from "react";
 import { CartProvider } from "./context/CartContext";
 import { OrdersProvider } from "./context/OrdersContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -60,6 +60,9 @@ const DeliveryDashboard = lazy(
 const DeliveryOrders = lazy(
   () => import("./modules/delivery/pages/DeliveryOrders"),
 );
+const DeliveryWallet = lazy(
+  () => import("./modules/delivery/pages/DeliveryWallet"),
+);
 const DeliveryOrderDetail = lazy(
   () => import("./modules/delivery/pages/DeliveryOrderDetail"),
 );
@@ -81,8 +84,9 @@ const DeliveryReturnOrders = lazy(
 const DeliveryProfile = lazy(
   () => import("./modules/delivery/pages/DeliveryProfile"),
 );
-const DeliveryEarnings = lazy(
-  () => import("./modules/delivery/pages/DeliveryEarnings"),
+
+const AdminWithdrawals = lazy(
+  () => import("./modules/admin/pages/AdminWithdrawals"),
 );
 const DeliverySettings = lazy(
   () => import("./modules/delivery/pages/DeliverySettings"),
@@ -257,8 +261,19 @@ const AdminManageCustomer = lazy(
   () => import("./modules/admin/pages/AdminManageCustomer"),
 );
 const AdminProfile = lazy(() => import("./modules/admin/pages/AdminProfile"));
+const AdminBillingSettings = lazy(
+  () => import("./modules/admin/pages/AdminBillingSettings"),
+);
+
+import { initializePushNotifications, setupForegroundNotificationHandler } from "./services/pushNotificationService";
 
 function App() {
+  // Initialize push notifications
+  useEffect(() => {
+    initializePushNotifications();
+    setupForegroundNotificationHandler();
+  }, []);
+
   return (
     <ErrorBoundary>
       <LoadingProvider>
@@ -386,9 +401,10 @@ function App() {
                                         path="profile"
                                         element={<DeliveryProfile />}
                                       />
+
                                       <Route
-                                        path="earnings"
-                                        element={<DeliveryEarnings />}
+                                        path="wallet"
+                                        element={<DeliveryWallet />}
                                       />
                                       <Route
                                         path="settings"
@@ -573,6 +589,10 @@ function App() {
                                         element={<AdminReturnRequest />}
                                       />
                                       <Route
+                                        path="withdrawals"
+                                        element={<AdminWithdrawals />}
+                                      />
+                                      <Route
                                         path="notification"
                                         element={<AdminNotification />}
                                       />
@@ -607,6 +627,10 @@ function App() {
                                       <Route
                                         path="delivery-app-policy"
                                         element={<AdminDeliveryAppPolicy />}
+                                      />
+                                      <Route
+                                        path="billing-settings"
+                                        element={<AdminBillingSettings />}
                                       />
                                       <Route
                                         path="users"

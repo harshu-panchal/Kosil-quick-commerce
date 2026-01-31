@@ -26,6 +26,8 @@ export interface ICustomer extends Document {
     sms: boolean;
     push: boolean;
   };
+  fcmTokens?: string[];
+  fcmTokenMobile?: string[];
   donationStats?: {
     totalDonated: number;
     lastDonationDate?: Date;
@@ -134,6 +136,14 @@ const CustomerSchema = new Schema<ICustomer>(
       email: { type: Boolean, default: true },
       sms: { type: Boolean, default: true },
       push: { type: Boolean, default: true },
+    },
+    fcmTokens: {
+      type: [String],
+      default: [],
+    },
+    fcmTokenMobile: {
+      type: [String],
+      default: [],
     },
     donationStats: {
       totalDonated: { type: Number, default: 0 },

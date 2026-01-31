@@ -1,22 +1,31 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IWithdrawRequest extends Document {
-    sellerId: mongoose.Types.ObjectId;
+    userId: mongoose.Types.ObjectId;
+    userType: 'SELLER' | 'DELIVERY_BOY';
     amount: number;
     status: 'Pending' | 'Approved' | 'Rejected' | 'Completed';
     paymentMethod: 'Bank Transfer' | 'UPI';
     accountDetails: string;
     remarks?: string;
+    transactionReference?: string;
+    processedBy?: mongoose.Types.ObjectId;
+    processedAt?: Date;
     createdAt: Date;
     updatedAt: Date;
 }
 
 const WithdrawRequestSchema = new Schema<IWithdrawRequest>(
     {
-        sellerId: {
+        userId: {
             type: Schema.Types.ObjectId,
-            ref: 'Seller',
-            required: [true, 'Seller ID is required'],
+            required: [true, 'User ID is required'],
+            refPath: 'userType'
+        },
+        userType: {
+            type: String,
+            required: [true, 'User type is required'],
+            enum: ['SELLER', 'DELIVERY_BOY'], // Enum values must match refPath
         },
         amount: {
             type: Number,
@@ -42,13 +51,24 @@ const WithdrawRequestSchema = new Schema<IWithdrawRequest>(
             type: String,
             trim: true,
         },
+        transactionReference: {
+            type: String,
+            trim: true,
+        },
+        processedBy: {
+            type: Schema.Types.ObjectId,
+            ref: 'Admin',
+        },
+        processedAt: {
+            type: Date,
+        },
     },
     {
         timestamps: true,
     }
 );
 
-WithdrawRequestSchema.index({ sellerId: 1 });
+WithdrawRequestSchema.index({ userId: 1, userType: 1 });
 WithdrawRequestSchema.index({ status: 1 });
 
 const WithdrawRequest = mongoose.model<IWithdrawRequest>('WithdrawRequest', WithdrawRequestSchema);

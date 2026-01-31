@@ -10,18 +10,23 @@ export interface IPayment extends Document {
   transactionId?: string;
   paymentId?: string;
 
+  // Razorpay Specific
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  razorpaySignature?: string;
+
   // Amount
   amount: number;
   currency: string;
 
   // Status
   status:
-    | "Pending"
-    | "Processing"
-    | "Completed"
-    | "Failed"
-    | "Refunded"
-    | "Cancelled";
+  | "Pending"
+  | "Processing"
+  | "Completed"
+  | "Failed"
+  | "Refunded"
+  | "Cancelled";
 
   // Payment Details
   paymentDate?: Date;
@@ -74,8 +79,23 @@ const PaymentSchema = new Schema<IPayment>(
       trim: true,
       unique: true,
       sparse: true,
+      index: true
     },
     paymentId: {
+      type: String,
+      trim: true,
+    },
+
+    // Razorpay Specific
+    razorpayOrderId: {
+      type: String,
+      trim: true,
+    },
+    razorpayPaymentId: {
+      type: String,
+      trim: true,
+    },
+    razorpaySignature: {
       type: String,
       trim: true,
     },
@@ -146,13 +166,12 @@ const PaymentSchema = new Schema<IPayment>(
   }
 );
 
-// Indexes for faster queries
+// Indexes
 PaymentSchema.index({ order: 1 });
 PaymentSchema.index({ customer: 1 });
-PaymentSchema.index({ transactionId: 1 });
 PaymentSchema.index({ status: 1 });
 PaymentSchema.index({ paymentDate: -1 });
 
-const Payment = mongoose.model<IPayment>("Payment", PaymentSchema);
+const Payment = mongoose.models.Payment || mongoose.model<IPayment>("Payment", PaymentSchema);
 
 export default Payment;

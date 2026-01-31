@@ -59,6 +59,7 @@ export interface ISeller extends Document {
   requireProductApproval: boolean;
   viewCustomerDetails: boolean;
   commission: number;
+  commissionRate?: number; // Alias or specific rate
 
   // Status
   status: 'Approved' | 'Pending' | 'Rejected';

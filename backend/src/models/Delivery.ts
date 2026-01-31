@@ -28,6 +28,7 @@ export interface IDelivery extends Document {
 
   // Commission & Payment
   bonusType?: string; // 'Fixed' | 'Salaried' | 'Commission Based'
+  commissionRate?: number; // Individual commission rate (overrides global setting)
   status: 'Active' | 'Inactive';
   isOnline: boolean; // Availability status
   location?: {
@@ -41,6 +42,8 @@ export interface IDelivery extends Document {
     location: boolean;
     sound: boolean;
   };
+  fcmTokens?: string[];
+  fcmTokenMobile?: string[];
 
   createdAt: Date;
   updatedAt: Date;
@@ -147,6 +150,11 @@ const DeliverySchema = new Schema<IDelivery>(
       type: String,
       trim: true,
     },
+    commissionRate: {
+      type: Number,
+      min: [0, 'Commission rate cannot be negative'],
+      max: [100, 'Commission rate cannot exceed 100%'],
+    },
     status: {
       type: String,
       enum: ['Active', 'Inactive'],
@@ -181,6 +189,14 @@ const DeliverySchema = new Schema<IDelivery>(
       notifications: { type: Boolean, default: true },
       location: { type: Boolean, default: true },
       sound: { type: Boolean, default: true }
+    },
+    fcmTokens: {
+      type: [String],
+      default: [],
+    },
+    fcmTokenMobile: {
+      type: [String],
+      default: [],
     },
   },
   {

@@ -1,7 +1,13 @@
+import dotenv from "dotenv";
+// Load environment variables as early as possible
+dotenv.config();
+
+console.log('--- SERVER STARTING ---');
+console.log('RAZORPAY_KEY_ID exists:', !!process.env.RAZORPAY_KEY_ID);
+
 import express, { Application, Request, Response } from "express";
 import { createServer } from "http";
 import cors from "cors";
-import dotenv from "dotenv";
 import connectDB from "./config/db";
 import routes from "./routes";
 import { errorHandler } from "./middleware/errorHandler";
@@ -9,9 +15,6 @@ import { notFound } from "./middleware/notFound";
 import { ensureDefaultAdmin } from "./utils/ensureDefaultAdmin";
 import { seedHeaderCategories } from "./utils/seedHeaderCategories";
 import { initializeSocket } from "./socket/socketService";
-
-// Load environment variables
-dotenv.config();
 
 const app: Application = express();
 const httpServer = createServer(app);

@@ -163,9 +163,8 @@ export default function FAQ() {
                       height="20"
                       viewBox="0 0 24 24"
                       fill="none"
-                      className={`flex-shrink-0 text-neutral-500 transition-transform ${
-                        isOpen ? "rotate-180" : ""
-                      }`}>
+                      className={`flex-shrink-0 text-neutral-500 transition-transform ${isOpen ? "rotate-180" : ""
+                        }`}>
                       <path
                         d="M6 9l6 6 6-6"
                         stroke="currentColor"

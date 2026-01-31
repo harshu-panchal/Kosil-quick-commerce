@@ -132,7 +132,10 @@ export default function DeliveryEarnings() {
         </div>
 
         {/* Withdraw Button */}
-        <button className="w-full mt-4 bg-orange-500 text-white rounded-xl py-3 font-semibold hover:bg-orange-600 transition-colors">
+        <button
+          onClick={() => navigate('/delivery/wallet')}
+          className="w-full mt-4 bg-orange-500 text-white rounded-xl py-3 font-semibold hover:bg-orange-600 transition-colors"
+        >
           Withdraw Earnings
         </button>
       </div>
