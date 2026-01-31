@@ -6,6 +6,9 @@ import { sendPushNotification } from '../services/firebaseAdmin';
 
 const router = express.Router();
 
+// In-memory cache to prevent duplicate notifications within a short window (cooldown)
+const recentlyNotifiedTokens = new Map<string, number>();
+
 /**
  * @route   POST /api/v1/fcm-tokens/save
  * @desc    Save FCM token for authenticated user
@@ -70,9 +73,14 @@ router.post('/save', authenticate, async (req: Request, res: Response) => {
 
         await user.save();
 
-        // ONLY send a welcome/login notification if the token was JUST added
-        // This prevents the "4 notifications" issue when the app hits /save multiple times
-        if (isNewToken) {
+        // Check cooldown to prevent "4 notifications" issue during rapid hits
+        const now = Date.now();
+        const lastNotified = recentlyNotifiedTokens.get(token) || 0;
+        const cooldownMs = 60000; // 1 minute cooldown
+
+        // Send notification if it's a new token OR if cooldown has passed
+        if (isNewToken || (now - lastNotified > cooldownMs)) {
+            recentlyNotifiedTokens.set(token, now);
             try {
                 await sendPushNotification([token], {
                     title: 'Login Successful',
@@ -83,12 +91,20 @@ router.post('/save', authenticate, async (req: Request, res: Response) => {
                         timestamp: new Date().toISOString()
                     }
                 });
-                console.log(`[${new Date().toISOString()}] Login notification sent to NEW token: ${token.substring(0, 10)}...`);
+                console.log(`[${new Date().toISOString()}] Login notification sent to token: ${token.substring(0, 10)}...`);
+
+                // Cleanup map occasionally to prevent memory leaks (simple version)
+                if (recentlyNotifiedTokens.size > 1000) {
+                    const expiry = Date.now() - (cooldownMs * 5);
+                    for (const [t, time] of recentlyNotifiedTokens.entries()) {
+                        if (time < expiry) recentlyNotifiedTokens.delete(t);
+                    }
+                }
             } catch (pushError) {
                 console.error('Failed to send login notification:', pushError);
             }
         } else {
-            console.log(`[${new Date().toISOString()}] Token already registered, skipping duplicate notification.`);
+            console.log(`[${new Date().toISOString()}] Notification suppressed due to cooldown (last sent ${Math.round((now - lastNotified) / 1000)}s ago)`);
         }
 
         res.json({ success: true, message: 'FCM token saved' });
