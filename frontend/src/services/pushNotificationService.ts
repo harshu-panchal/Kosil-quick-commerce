@@ -50,11 +50,19 @@ export async function getFCMToken() {
 
     try {
         const registration = await registerServiceWorker();
-        if (!registration) return null; // Failed or not supported
+        if (!registration) {
+            if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                alert('❌ Service Worker registration failed. FCM will not work on this mobile device.');
+            }
+            return null; // Failed or not supported
+        }
 
         // Wait for service worker to be ready
-        // verifying that the registration is active
         await navigator.serviceWorker.ready;
+
+        if (!window.isSecureContext && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+            alert('❌ Not a Secure Context (HTTPS missing). FCM will not work on this mobile browser.');
+        }
 
         console.log('DEBUG: Using VAPID Key:', VAPID_KEY);
 

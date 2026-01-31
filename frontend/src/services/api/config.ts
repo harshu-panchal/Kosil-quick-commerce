@@ -22,6 +22,7 @@ if (import.meta.env.DEV || !import.meta.env.VITE_API_BASE_URL) {
   console.log('[API Config] Base URL:', API_BASE_URL);
   console.log('[API Config] VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
   console.log('[API Config] Socket Base URL:', getSocketBaseURL());
+  console.log('[API Config] Secure Context:', window.isSecureContext ? '✅ Yes' : '❌ No (FCM will fail on mobile)');
 }
 
 // Create axios instance
