@@ -12,6 +12,8 @@ declare global {
   }
 }
 
+// edndgvoercnewrecc
+
 /**
  * Authenticate user by verifying JWT token
  */
