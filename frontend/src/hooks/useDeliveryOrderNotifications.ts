@@ -78,6 +78,7 @@ export const useDeliveryOrderNotifications = () => {
                 isConnected: false,
                 error: `Connection failed: ${error.message}`,
             }));
+            attemptReconnect();
         });
 
         socket.on('disconnect', (reason) => {
@@ -86,6 +87,11 @@ export const useDeliveryOrderNotifications = () => {
                 ...prev,
                 isConnected: false,
             }));
+
+            // Attempt reconnection if not intentional
+            if (reason !== 'io server disconnect' && reason !== 'io client disconnect') {
+                attemptReconnect();
+            }
         });
 
         socket.on('new-order', (orderData: OrderNotificationData) => {
@@ -153,29 +159,6 @@ export const useDeliveryOrderNotifications = () => {
                     ),
                 };
             });
-        });
-
-        socket.on('disconnect', (reason: any) => {
-            console.log('❌ Delivery notification socket disconnected:', reason);
-            setState(prev => ({ ...prev, isConnected: false }));
-
-            // Attempt reconnection
-            if (reason === 'io server disconnect' || reason === 'io client disconnect') {
-                return; // Don't auto-reconnect if intentionally disconnected
-            }
-
-            attemptReconnect();
-        });
-
-        socket.on('connect_error', (error: any) => {
-            console.error('Socket connection error:', error);
-            setState(prev => ({
-                ...prev,
-                isConnected: false,
-                error: 'Failed to connect to notification server',
-            }));
-
-            attemptReconnect();
         });
 
         socket.on('error', (error: any) => {

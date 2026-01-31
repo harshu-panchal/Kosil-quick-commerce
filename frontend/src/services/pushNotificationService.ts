@@ -1,8 +1,7 @@
 import { messaging, getToken, onMessage } from '../firebase';
-import axios from 'axios';
+import api from './api/config';
 
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || "dummy-vapid-key";
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
 
 // Register service worker
 async function registerServiceWorker() {
@@ -114,21 +113,10 @@ export async function registerFCMToken(forceUpdate = false) {
         }
 
         // Save to backend
-        const authToken = localStorage.getItem('authToken'); // Fixed: Changed 'token' to 'authToken'
-        if (!authToken) {
-            console.warn('No auth token found, cannot register FCM token with backend');
-            return token; // Return token anyway, maybe retry later
-        }
-
         try {
-            const response = await axios.post(`${API_URL}/fcm-tokens/save`, {
+            const response = await api.post(`/fcm-tokens/save`, {
                 token: token,
                 platform: 'web'
-            }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`
-                }
             });
 
             if (response.data.success) {
@@ -156,17 +144,34 @@ export function setupForegroundNotificationHandler(handler?: (payload: any) => v
     onMessage(messaging, (payload) => {
         console.log('📬 Foreground message received:', payload);
 
-        // We've removed original 'new Notification' here to prevent "double notifications".
-        // Foreground notifications should ideally be handled by in-app UI like Toasts or Modals
-        // to provide a premium feel and avoid cluttering the system notification tray
-        // while the user is already using the app.
-
-        // Call custom handler if provided (e.g. to show a Toast, update UI badge, or show a modal)
+        // Call custom handler if provided
         if (handler) {
             handler(payload);
-        } else {
-            // Optional: log that no handler was provided
-            console.log('No foreground handler provided for message:', payload.notification?.title);
+        }
+
+        // Show a system notification even in foreground
+        // This ensures the notification appears in the "notification center" 
+        // while the user is actively using the app.
+        if (Notification.permission === 'granted' && payload.notification) {
+            const { title, body } = payload.notification;
+            const notificationTitle = title || 'Kosil Notification';
+            const notificationOptions = {
+                body: body,
+                icon: '/favicon.ico',
+                badge: '/favicon.ico',
+                tag: payload.data?.type || 'kosil-general',
+                data: payload.data
+            };
+
+            // Use the Notification API to show it immediately
+            try {
+                new Notification(notificationTitle, notificationOptions);
+            } catch (err) {
+                console.warn('Failed to show foreground notification via new Notification(), trying ServiceWorker:', err);
+                navigator.serviceWorker.ready.then(registration => {
+                    registration.showNotification(notificationTitle, notificationOptions);
+                });
+            }
         }
     });
 }

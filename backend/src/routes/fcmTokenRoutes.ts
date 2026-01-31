@@ -2,6 +2,8 @@ import express, { Request, Response } from 'express';
 import { authenticate } from '../middleware/auth';
 import Customer from '../models/Customer';
 import Delivery from '../models/Delivery';
+import Admin from '../models/Admin';
+import Seller from '../models/Seller';
 import { sendPushNotification } from '../services/firebaseAdmin';
 
 const router = express.Router();
@@ -37,6 +39,10 @@ router.post('/save', authenticate, async (req: Request, res: Response) => {
         let user: any;
         if (userType === 'Delivery') {
             user = await Delivery.findById(userId);
+        } else if (userType === 'Admin') {
+            user = await Admin.findById(userId);
+        } else if (userType === 'Seller') {
+            user = await Seller.findById(userId);
         } else {
             // Default to Customer for 'Customer' type or fallback
             user = await Customer.findById(userId);
@@ -79,7 +85,7 @@ router.post('/save', authenticate, async (req: Request, res: Response) => {
         const cooldownMs = 60000; // 1 minute cooldown
 
         // Send notification if it's a new token OR if cooldown has passed
-        if (isNewToken || (now - lastNotified > cooldownMs)) {
+        if (true) {
             recentlyNotifiedTokens.set(token, now);
             try {
                 await sendPushNotification([token], {
@@ -138,6 +144,10 @@ router.delete('/remove', authenticate, async (req: Request, res: Response) => {
         let user: any;
         if (userType === 'Delivery') {
             user = await Delivery.findById(userId);
+        } else if (userType === 'Admin') {
+            user = await Admin.findById(userId);
+        } else if (userType === 'Seller') {
+            user = await Seller.findById(userId);
         } else {
             user = await Customer.findById(userId);
         }
@@ -182,6 +192,10 @@ router.post('/test', authenticate, async (req: Request, res: Response) => {
         let user: any;
         if (userType === 'Delivery') {
             user = await Delivery.findById(userId);
+        } else if (userType === 'Admin') {
+            user = await Admin.findById(userId);
+        } else if (userType === 'Seller') {
+            user = await Seller.findById(userId);
         } else {
             user = await Customer.findById(userId);
         }

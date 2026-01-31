@@ -8,6 +8,8 @@ export interface IAdmin extends Document {
   email: string;
   role: 'Super Admin' | 'Admin';
   password: string;
+  fcmTokens?: string[];
+  fcmTokenMobile?: string[];
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -61,6 +63,14 @@ const AdminSchema = new Schema<IAdmin>(
       required: [true, 'Password is required'],
       minlength: [6, 'Password must be at least 6 characters'],
       select: false, // Don't return password by default
+    },
+    fcmTokens: {
+      type: [String],
+      default: [],
+    },
+    fcmTokenMobile: {
+      type: [String],
+      default: [],
     },
   },
   {
