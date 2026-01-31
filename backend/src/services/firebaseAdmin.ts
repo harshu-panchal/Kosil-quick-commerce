@@ -38,20 +38,24 @@ try {
     // 3. Initialize if credentials found
     if (serviceAccount) {
         if (admin.apps.length === 0) {
-            admin.initializeApp({
-                credential: admin.credential.cert(serviceAccount),
-            });
-            isFirebaseInitialized = true;
+            try {
+                admin.initializeApp({
+                    credential: admin.credential.cert(serviceAccount),
+                });
+                isFirebaseInitialized = true;
+                console.log('✅ Firebase Admin SDK initialized successfully');
+            } catch (initErr) {
+                console.error('❌ Failed to initialize admin SDK:', initErr);
+            }
         } else {
-            isFirebaseInitialized = true; // Already initialized
+            isFirebaseInitialized = true;
         }
     } else {
-        console.warn('Firebase service account not found (checked file path and env var).');
-        console.warn('Push notifications will NOT work until configured.');
+        console.warn('⚠️ Firebase service account not found. Push notifications are disabled.');
     }
 
 } catch (error) {
-    console.error('Error initializing Firebase Admin:', error);
+    console.error('CRITICAL: Error during Firebase initialization logic:', error);
 }
 
 export interface PushNotificationPayload {
@@ -64,34 +68,43 @@ export interface PushNotificationPayload {
  * Send push notification to multiple tokens
  */
 export async function sendPushNotification(tokens: string[], payload: PushNotificationPayload) {
+    if (!tokens || tokens.length === 0) return { successCount: 0, failureCount: 0 };
+
     if (!isFirebaseInitialized) {
-        console.warn('Firebase not initialized. Simulating notification send.');
-        return { successCount: tokens.length, failureCount: 0 };
+        console.warn(`[${new Date().toISOString()}] Firebase not initialized. Cannot send to ${tokens.length} tokens.`);
+        return { successCount: 0, failureCount: tokens.length };
     }
 
     try {
-        const message = {
+        const message: any = {
             notification: {
                 title: payload.title,
                 body: payload.body,
             },
             data: payload.data || {},
             tokens: tokens,
+            // Mobile Specifics
+            android: {
+                priority: 'high',
+                notification: {
+                    sound: 'default',
+                    channelId: 'kosil_notifications', // Ensure this matches your Flutter side channel if defined
+                    clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+                },
+            },
+            apns: {
+                payload: {
+                    aps: {
+                        sound: 'default',
+                        badge: 1,
+                        contentAvailable: true,
+                    },
+                },
+            },
         };
 
         const response = await admin.messaging().sendEachForMulticast(message);
-        console.log(`Successfully sent: ${response.successCount} messages`);
-        console.log(`Failed: ${response.failureCount} messages`);
-
-        if (response.failureCount > 0) {
-            const failedTokens: string[] = [];
-            response.responses.forEach((resp, idx) => {
-                if (!resp.success) {
-                    failedTokens.push(tokens[idx]);
-                }
-            });
-            console.log('Failed tokens:', failedTokens);
-        }
+        console.log(`[${new Date().toISOString()}] FCM Send to ${tokens.length} tokens: ${response.successCount} success, ${response.failureCount} failure`);
 
         return response;
     } catch (error) {
