@@ -38,6 +38,9 @@ export async function requestNotificationPermission() {
             return true;
         } else {
             console.log('❌ Notification permission denied');
+            if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                alert('⚠️ Notification permission DENIED. You must enable notifications in your browser settings to receive orders.');
+            }
             return false;
         }
     }
@@ -81,6 +84,9 @@ export async function getFCMToken() {
             }
         } catch (tokenError: any) {
             console.error('❌ Error calling getToken:', tokenError);
+            if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                alert(`❌ getToken failed: ${tokenError.message || 'Unknown error'}`);
+            }
             if (tokenError.code === 'messaging/token-subscribe-failed' || tokenError.message?.includes('Missing required authentication credential')) {
                 console.error(`👉 POTENTIAL FIX: Check your Google Cloud Console API Key restrictions. ` +
                     `Ensure "${window.location.origin}" (and with trailing slash) is allowed in HTTP Referrers.`);
@@ -131,23 +137,30 @@ export async function registerFCMToken(forceUpdate = false) {
 
         // Save to backend
         try {
+            console.log(`Attempting to save FCM token to backend for ${platform}...`);
             const response = await api.post(`/fcm-tokens/save`, {
                 token: token,
                 platform: platform
             });
 
             if (response.data.success) {
-                localStorage.setItem('fcm_token_web', token); // We still use this as local flag
+                localStorage.setItem('fcm_token_web', token);
                 console.log(`✅ FCM token registered with backend as ${platform}`);
                 return token;
             }
-        } catch (apiError) {
+        } catch (apiError: any) {
             console.error('Failed to register token with backend API:', apiError);
+            if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                alert(`❌ Backend registration FAILED: ${apiError.response?.data?.message || apiError.message || 'Network error'}. Check if your API URL is correct.`);
+            }
         }
 
         return token;
-    } catch (error) {
+    } catch (error: any) {
         console.error('❌ Error in registerFCMToken flow:', error);
+        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+            alert(`❌ FCM Flow Error: ${error.message || 'Unknown exception'}`);
+        }
         return null;
     }
 }

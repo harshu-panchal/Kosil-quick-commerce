@@ -119,6 +119,7 @@ export const getAuthToken = (): string | null => {
 export const removeAuthToken = () => {
   localStorage.removeItem("authToken");
   localStorage.removeItem("userData");
+  localStorage.removeItem("fcm_token_web"); // Clear FCM registration cache on logout
 };
 
 export default api;
