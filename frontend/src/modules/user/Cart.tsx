@@ -121,9 +121,12 @@ export default function Cart() {
                   </div>
                 </div>
 
-                {/* Remove Button */}
                 <button
-                  onClick={() => removeFromCart(item.product.id)}
+                  onClick={() => {
+                    const variantId = (item.product as any).variantId || (item.product as any).selectedVariant?._id || item.variant;
+                    const variantTitle = (item.product as any).variantTitle || item.product.pack;
+                    removeFromCart(item.product.id, variantId, variantTitle);
+                  }}
                   className="text-neutral-400 hover:text-red-600 transition-colors self-start"
                   aria-label="Remove item"
                 >

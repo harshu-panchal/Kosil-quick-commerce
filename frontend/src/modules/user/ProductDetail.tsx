@@ -199,32 +199,34 @@ export default function ProductDetail() {
   // Get quantity in cart - check by product ID and variant if available
   const cartItem = product
     ? cart.items.find((item) => {
-        if (!item?.product) return false;
-        const itemProductId = item.product.id || item.product._id;
-        const productId = product.id || product._id;
+      if (!item?.product) return false;
+      const itemProductId = item.product.id || item.product._id;
+      const productId = product.id || product._id;
 
-        if (itemProductId !== productId) return false;
+      if (itemProductId !== productId) return false;
 
-        // If variant exists, match by variant
+      // If product has variations, we need to match the selected one
+      if (product.variations && product.variations.length > 0) {
         if (selectedVariant) {
           const itemVariantId =
             (item.product as any).variantId ||
             (item.product as any).selectedVariant?._id;
           const itemVariantTitle =
             (item.product as any).variantTitle || (item.product as any).pack;
+
           return (
             itemVariantId === selectedVariant._id ||
-            itemVariantTitle === variantTitle
+            itemVariantTitle === variantTitle ||
+            (itemVariantId && itemVariantId === variantTitle)
           );
         }
+        // If product has variations but none selected (shouldn't happen), don't match
+        return false;
+      }
 
-        // If no variant, check that item also has no variant
-        const itemVariantId =
-          (item.product as any).variantId ||
-          (item.product as any).selectedVariant?._id;
-        const itemVariantTitle = (item.product as any).variantTitle;
-        return !itemVariantId && !itemVariantTitle;
-      })
+      // If product has NO variations, any item with this product ID in cart is a match
+      return true;
+    })
     : null;
   const inCartQty = cartItem?.quantity || 0;
 
@@ -505,11 +507,10 @@ export default function ProductDetail() {
                         setSelectedImageIndex(index);
                         setTimeout(() => setIsTransitioning(false), 300);
                       }}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        index === selectedImageIndex
+                      className={`w-2 h-2 rounded-full transition-all ${index === selectedImageIndex
                           ? "bg-white w-6"
                           : "bg-white/50 hover:bg-white/75"
-                      }`}
+                        }`}
                       aria-label={`Go to image ${index + 1}`}
                     />
                   ))}
@@ -551,11 +552,10 @@ export default function ProductDetail() {
                       setSelectedImageIndex(index);
                       setTimeout(() => setIsTransitioning(false), 300);
                     }}
-                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
-                      index === selectedImageIndex
+                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${index === selectedImageIndex
                         ? "border-green-600 ring-2 ring-green-200"
                         : "border-neutral-200 hover:border-neutral-300"
-                    }`}>
+                      }`}>
                     <img
                       src={image}
                       alt={`${product.name} - Image ${index + 1}`}
@@ -625,13 +625,12 @@ export default function ProductDetail() {
                       key={index}
                       onClick={() => setSelectedVariantIndex(index)}
                       disabled={isOutOfStock}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border-2 ${
-                        isSelected
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border-2 ${isSelected
                           ? "border-green-600 bg-green-50 text-green-700"
                           : isOutOfStock
-                          ? "border-neutral-200 bg-neutral-100 text-neutral-400 cursor-not-allowed"
-                          : "border-neutral-300 bg-white text-neutral-700 hover:border-green-500 hover:bg-green-50"
-                      }`}>
+                            ? "border-neutral-200 bg-neutral-100 text-neutral-400 cursor-not-allowed"
+                            : "border-neutral-300 bg-white text-neutral-700 hover:border-green-500 hover:bg-green-50"
+                        }`}>
                       {variantTitle}
                       {isOutOfStock && (
                         <span className="ml-1 text-xs">(Out of Stock)</span>
@@ -692,9 +691,8 @@ export default function ProductDetail() {
               viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
-              className={`transition-transform ${
-                isProductDetailsExpanded ? "rotate-180" : ""
-              }`}>
+              className={`transition-transform ${isProductDetailsExpanded ? "rotate-180" : ""
+                }`}>
               <path
                 d="M6 9l6 6 6-6"
                 stroke="currentColor"
@@ -803,9 +801,8 @@ export default function ProductDetail() {
                   viewBox="0 0 24 24"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
-                  className={`transition-transform ${
-                    isHighlightsExpanded ? "rotate-180" : ""
-                  }`}>
+                  className={`transition-transform ${isHighlightsExpanded ? "rotate-180" : ""
+                    }`}>
                   <path
                     d="M6 9l6 6 6-6"
                     stroke="currentColor"
@@ -879,9 +876,8 @@ export default function ProductDetail() {
                   viewBox="0 0 24 24"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
-                  className={`transition-transform ${
-                    isInfoExpanded ? "rotate-180" : ""
-                  }`}>
+                  className={`transition-transform ${isInfoExpanded ? "rotate-180" : ""
+                    }`}>
                   <path
                     d="M6 9l6 6 6-6"
                     stroke="currentColor"
@@ -976,9 +972,8 @@ export default function ProductDetail() {
                       </span>
                       <span className="text-xs text-neutral-600 leading-relaxed flex-1">
                         {product.isReturnable
-                          ? `This product is returnable within ${
-                              product.maxReturnDays || 2
-                            } days.`
+                          ? `This product is returnable within ${product.maxReturnDays || 2
+                          } days.`
                           : "This product is non-returnable."}
                       </span>
                     </div>
@@ -1105,8 +1100,7 @@ export default function ProductDetail() {
                       <div
                         onClick={() =>
                           navigate(
-                            `/product/${
-                              similarProduct.id || similarProduct._id
+                            `/product/${similarProduct.id || similarProduct._id
                             }`,
                             { state: { fromStore: true } }
                           )
@@ -1350,24 +1344,23 @@ export default function ProductDetail() {
                       !isAvailableAtLocation ||
                       (!isVariantAvailable && variantStock !== 0)
                     }
-                    className={`px-6 py-2 text-sm font-semibold h-[36px] ${
-                      !isAvailableAtLocation ||
-                      (!isVariantAvailable && variantStock !== 0)
+                    className={`px-6 py-2 text-sm font-semibold h-[36px] ${!isAvailableAtLocation ||
+                        (!isVariantAvailable && variantStock !== 0)
                         ? "opacity-50 cursor-not-allowed"
                         : ""
-                    }`}
+                      }`}
                     title={
                       !isAvailableAtLocation
                         ? "Not available at your location"
                         : !isVariantAvailable && variantStock !== 0
-                        ? "This variant is out of stock"
-                        : ""
+                          ? "This variant is out of stock"
+                          : ""
                     }>
                     {!isAvailableAtLocation
                       ? "Unavailable"
                       : !isVariantAvailable && variantStock !== 0
-                      ? "Out of Stock"
-                      : "Add to cart"}
+                        ? "Out of Stock"
+                        : "Add to cart"}
                   </Button>
                 </motion.div>
               ) : (

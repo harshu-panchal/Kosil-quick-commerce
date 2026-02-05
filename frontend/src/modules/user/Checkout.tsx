@@ -354,7 +354,7 @@ export default function Checkout() {
     setCouponError(null);
   };
 
-  const handleMoveToWishlist = async (product: any) => {
+  const handleMoveToWishlist = async (product: any, variantId?: string, variantTitle?: string) => {
     if (!product?.id && !product?._id) return;
 
     const productId = product.id || product._id;
@@ -375,7 +375,7 @@ export default function Checkout() {
         userLocation.longitude
       );
       // Remove from cart
-      await removeFromCart(productId);
+      await removeFromCart(productId, variantId, variantTitle);
       // Show success message
       showGlobalToast("Item moved to wishlist");
     } catch (error: any) {
@@ -1149,7 +1149,9 @@ export default function Checkout() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleMoveToWishlist(item.product);
+                        const variantId = (item.product as any).variantId || (item.product as any).selectedVariant?._id || item.variant;
+                        const variantTitle = (item.product as any).variantTitle || item.product.pack;
+                        handleMoveToWishlist(item.product, variantId, variantTitle);
                       }}
                       className="text-[10px] text-green-600 font-medium mb-1.5 hover:text-green-700 transition-colors">
                       Move to wishlist
@@ -1159,9 +1161,11 @@ export default function Checkout() {
                     <div className="flex items-center justify-between mt-1.5">
                       <div className="flex items-center gap-1.5 bg-white border-2 border-green-600 rounded-full px-1.5 py-0.5">
                         <button
-                          onClick={() =>
-                            updateQuantity(item.product?.id, item.quantity - 1)
-                          }
+                          onClick={() => {
+                            const variantId = (item.product as any).variantId || (item.product as any).selectedVariant?._id || item.variant;
+                            const variantTitle = (item.product as any).variantTitle || item.product.pack;
+                            updateQuantity(item.product?.id, item.quantity - 1, variantId, variantTitle);
+                          }}
                           className="w-5 h-5 flex items-center justify-center text-green-600 font-bold hover:bg-green-50 rounded-full transition-colors text-xs">
                           −
                         </button>
@@ -1169,9 +1173,11 @@ export default function Checkout() {
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() =>
-                            updateQuantity(item.product?.id, item.quantity + 1)
-                          }
+                          onClick={() => {
+                            const variantId = (item.product as any).variantId || (item.product as any).selectedVariant?._id || item.variant;
+                            const variantTitle = (item.product as any).variantTitle || item.product.pack;
+                            updateQuantity(item.product?.id, item.quantity + 1, variantId, variantTitle);
+                          }}
                           className="w-5 h-5 flex items-center justify-center text-green-600 font-bold hover:bg-green-50 rounded-full transition-colors text-xs">
                           +
                         </button>
