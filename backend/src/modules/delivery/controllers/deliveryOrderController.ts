@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import Order from "../../../models/Order";
 import { notifySellersOfOrderUpdate } from "../../../services/sellerNotificationService";
-import Delivery from "../../../models/Delivery";
 import OrderItem from "../../../models/OrderItem";
 import Seller from "../../../models/Seller";
 import { generateDeliveryOtp, verifyDeliveryOtp } from "../../../services/deliveryOtpService";
@@ -207,14 +206,13 @@ export const updateOrderStatus = asyncHandler(async (req: Request, res: Response
         order.deliveredAt = new Date();
         order.paymentStatus = 'Paid'; // Assume paid on delivery (or already paid)
 
-        // CASH COLLECTION LOGIC
-        if (order.paymentMethod === 'COD') {
-            await Delivery.findByIdAndUpdate(deliveryId, {
-                $inc: { cashCollected: order.total }
-            });
+        // Commissions and COD will be handled by processOrderStatusTransition below
+        try {
+            await processOrderStatusTransition(id, 'Delivered', previousStatus);
+        } catch (transitionError: any) {
+            console.error('Error processing order status transition:', transitionError);
+            // Continue even if transition fails
         }
-
-
     }
 
     await order.save();
@@ -426,11 +424,7 @@ export const verifyDeliveryOtpController = asyncHandler(async (req: Request, res
 
         // Update delivery boy balance and cash collected (if COD)
         if (updatedOrder && updatedOrder.status === 'Delivered') {
-            if (updatedOrder.paymentMethod === 'COD') {
-                await Delivery.findByIdAndUpdate(deliveryId, {
-                    $inc: { cashCollected: updatedOrder.total }
-                });
-            }
+            // Commissions and COD are handled by processOrderStatusTransition called above
 
 
 

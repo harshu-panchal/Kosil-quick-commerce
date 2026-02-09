@@ -145,6 +145,22 @@ export const capturePayment = async (
 
         await payment.save({ session });
 
+        // Update Platform Wallet tracking
+        try {
+            const PlatformWallet = (await import('../models/PlatformWallet')).default;
+            const platformWallet = await PlatformWallet.getWallet();
+            platformWallet.totalPlatformEarning += order.total;
+            platformWallet.currentPlatformBalance += order.total;
+
+            if (session) {
+                await platformWallet.save({ session });
+            } else {
+                await platformWallet.save();
+            }
+        } catch (pwError) {
+            console.error("Error updating platform wallet in capturePayment:", pwError);
+        }
+
         // Update order
         order.paymentStatus = 'Paid';
         order.paymentId = razorpayPaymentId;

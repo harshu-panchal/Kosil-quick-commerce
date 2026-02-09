@@ -9,6 +9,7 @@ export interface WalletStats {
   totalAdminEarnings: number;
   sellerPendingPayouts: number;
   deliveryPendingPayouts: number;
+  pendingFromDeliveryBoy: number;
   pendingWithdrawalsCount?: number;
 }
 

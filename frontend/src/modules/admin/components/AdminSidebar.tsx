@@ -230,29 +230,6 @@ const menuSections: MenuSection[] = [
               </svg>
             ),
           },
-          {
-            label: "Seller Transaction",
-            path: "/admin/manage-seller/transaction",
-            icon: (
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <path d="M12 6V12M12 18V12"></path>
-                <path d="M8 12H16"></path>
-                <path d="M8 8L12 4L16 8"></path>
-                <path d="M8 16L12 20L16 16"></path>
-                <path d="M16 8L12 4L8 8"></path>
-                <path d="M16 16L12 20L8 16"></path>
-              </svg>
-            ),
-          },
         ],
       },
     ],
@@ -388,51 +365,20 @@ const menuSections: MenuSection[] = [
               </svg>
             ),
           },
-          {
-            label: "Cash Collection",
-            path: "/admin/delivery-boy/cash-collection",
-            icon: (
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <path d="M12 6V12M12 18V12"></path>
-                <path d="M8 12H16"></path>
-                <path d="M12 18L10 20L12 22L14 20L12 18Z"></path>
-                <path d="M10 20H14"></path>
-                <path d="M12 20V22"></path>
-              </svg>
-            ),
-          },
         ],
       },
     ],
   },
   {
-    title: "Miscellaneous",
+    title: "Finance Section",
     items: [
       {
         label: "Wallet",
         path: "/admin/wallet",
         icon: (
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round">
-            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-            <line x1="1" y1="10" x2="23" y2="10"></line>
-            <path d="M7 14h.01M11 14h.01M15 14h.01M19 14h.01"></path>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="6" width="20" height="12" rx="2" />
+            <path d="M12 12h.01M17 12h.01M7 12h.01" />
           </svg>
         ),
       },
@@ -440,20 +386,40 @@ const menuSections: MenuSection[] = [
         label: "Withdrawals",
         path: "/admin/withdrawals",
         icon: (
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
             <polyline points="17 6 23 6 23 12"></polyline>
           </svg>
         ),
       },
+      {
+        label: "Seller Transaction",
+        path: "/admin/manage-seller/transaction",
+        icon: (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+        ),
+      },
+      {
+        label: "Cash Collection",
+        path: "/admin/delivery-boy/cash-collection",
+        icon: (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M16 8l-4 4-4-4" />
+            <path d="M12 16V8" />
+          </svg>
+        ),
+      },
+    ],
+  },
+  {
+    title: "Miscellaneous",
+    items: [
       {
         label: "Users",
         path: "/admin/users",

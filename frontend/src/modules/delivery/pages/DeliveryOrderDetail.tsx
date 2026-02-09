@@ -175,6 +175,14 @@ export default function DeliveryOrderDetail() {
             alert('Please enter OTP');
             return;
         }
+
+        // COD Reminder
+        const isCOD = order?.paymentMethod === 'COD';
+        if (isCOD) {
+            const confirmCash = window.confirm(`This is a COD order. Have you collected ₹${order.totalAmount} from the customer?`);
+            if (!confirmCash) return;
+        }
+
         try {
             setOtpVerifying(true);
             const result = await verifyDeliveryOtp(id, otpValue);
@@ -443,7 +451,7 @@ export default function DeliveryOrderDetail() {
                     },
                     (error: GeolocationPositionError) => {
                         // ... error handling ...
-                         if (error.code === error.PERMISSION_DENIED) {
+                        if (error.code === error.PERMISSION_DENIED) {
                             if (!locationPermissionDeniedRef.current) {
                                 locationPermissionDeniedRef.current = true;
                                 console.warn('Location permission denied.');
@@ -661,10 +669,9 @@ export default function DeliveryOrderDetail() {
                                                 </div>
                                                 <p className="text-sm text-neutral-600">{seller.address}, {seller.city}</p>
                                                 {distance !== undefined && (
-                                                    <p className={`text-xs mt-1 font-medium ${
-                                                        withinRange ? 'text-green-600' :
+                                                    <p className={`text-xs mt-1 font-medium ${withinRange ? 'text-green-600' :
                                                         distance < 1000 ? 'text-yellow-600' : 'text-red-600'
-                                                    }`}>
+                                                        }`}>
                                                         {distance < 1000 ? `${distance}m away` : `${(distance / 1000).toFixed(1)}km away`}
                                                     </p>
                                                 )}
@@ -675,11 +682,10 @@ export default function DeliveryOrderDetail() {
                                             <button
                                                 onClick={() => handleSellerPickup(seller.sellerId)}
                                                 disabled={!withinRange || isLoading}
-                                                className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-all ${
-                                                    withinRange && !isLoading
-                                                        ? 'bg-green-600 text-white hover:bg-green-700 active:scale-[0.98]'
-                                                        : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
-                                                }`}
+                                                className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-all ${withinRange && !isLoading
+                                                    ? 'bg-green-600 text-white hover:bg-green-700 active:scale-[0.98]'
+                                                    : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+                                                    }`}
                                             >
                                                 {isLoading ? 'Confirming...' : withinRange ? 'Confirm Pickup' : 'Move within 500m to pickup'}
                                             </button>
@@ -689,6 +695,22 @@ export default function DeliveryOrderDetail() {
                             })}
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* COD Banner */}
+            {order.paymentMethod === 'COD' && order.status !== 'Delivered' && (
+                <div className="mx-4 mt-4 bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-700">
+                            <Icons.ShoppingBag size={20} />
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-yellow-800 uppercase tracking-wider">Cash to Collect</p>
+                            <p className="text-lg font-black text-yellow-900">₹{order.totalAmount}</p>
+                        </div>
+                    </div>
+                    <span className="px-3 py-1 bg-yellow-200 text-yellow-800 rounded-lg text-[10px] font-bold uppercase tracking-tight">COD Order</span>
                 </div>
             )}
 
@@ -830,10 +852,9 @@ export default function DeliveryOrderDetail() {
 
                         {/* Distance indicator */}
                         {customerProximity && (
-                            <p className={`text-xs mb-2 font-medium ${
-                                customerProximity.withinRange ? 'text-green-600' :
+                            <p className={`text-xs mb-2 font-medium ${customerProximity.withinRange ? 'text-green-600' :
                                 customerProximity.distance < 1000 ? 'text-yellow-600' : 'text-red-600'
-                            }`}>
+                                }`}>
                                 {customerProximity.distance < 1000
                                     ? `${customerProximity.distance}m from customer`
                                     : `${(customerProximity.distance / 1000).toFixed(1)}km from customer`}
@@ -847,9 +868,8 @@ export default function DeliveryOrderDetail() {
                             onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, '').slice(0, 4))}
                             placeholder="Enter 4-digit OTP"
                             disabled={!showOtpInput}
-                            className={`w-full px-4 py-3 border rounded-xl text-lg font-semibold text-center mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                showOtpInput ? 'border-neutral-300 bg-white' : 'border-neutral-200 bg-neutral-100 text-neutral-400'
-                            }`}
+                            className={`w-full px-4 py-3 border rounded-xl text-lg font-semibold text-center mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500 ${showOtpInput ? 'border-neutral-300 bg-white' : 'border-neutral-200 bg-neutral-100 text-neutral-400'
+                                }`}
                             maxLength={4}
                         />
 
@@ -858,11 +878,10 @@ export default function DeliveryOrderDetail() {
                                 <button
                                     onClick={handleSendOtp}
                                     disabled={!getOtpEnabled || otpSending}
-                                    className={`flex-1 py-3 rounded-xl font-semibold transition-all ${
-                                        getOtpEnabled && !otpSending
-                                            ? 'bg-green-600 text-white hover:bg-green-700 active:scale-[0.98]'
-                                            : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
-                                    }`}
+                                    className={`flex-1 py-3 rounded-xl font-semibold transition-all ${getOtpEnabled && !otpSending
+                                        ? 'bg-green-600 text-white hover:bg-green-700 active:scale-[0.98]'
+                                        : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+                                        }`}
                                 >
                                     {otpSending ? 'Sending...' : getOtpEnabled ? 'Get OTP' : 'Move within 500m to get OTP'}
                                 </button>

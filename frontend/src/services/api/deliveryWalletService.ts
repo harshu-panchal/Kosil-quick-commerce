@@ -71,3 +71,33 @@ export const getDeliveryCommissions = async () => {
         throw error;
     }
 };
+/**
+ * Create admin payout order (Razorpay)
+ */
+export const createAdminPayoutOrder = async (amount: number) => {
+    try {
+        const response = await api.post('/delivery/wallet/payout/create', { amount });
+        return response.data;
+    } catch (error: any) {
+        console.error('Error creating admin payout order:', error);
+        throw error;
+    }
+};
+
+/**
+ * Verify admin payout (Razorpay signature)
+ */
+export const verifyAdminPayout = async (data: {
+    razorpayOrderId: string;
+    razorpayPaymentId: string;
+    razorpaySignature: string;
+    amount: number;
+}) => {
+    try {
+        const response = await api.post('/delivery/wallet/payout/verify', data);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error verifying admin payout:', error);
+        throw error;
+    }
+};

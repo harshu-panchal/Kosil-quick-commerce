@@ -3,6 +3,7 @@ import WithdrawRequest from '../models/WithdrawRequest';
 import Seller from '../models/Seller';
 import Delivery from '../models/Delivery';
 import AppSettings from '../models/AppSettings';
+import PlatformWallet from '../models/PlatformWallet';
 import mongoose from 'mongoose';
 
 /**
@@ -48,6 +49,23 @@ export const creditWallet = async (
             await Model.findByIdAndUpdate(userId, updateQuery, { session });
         } else {
             await Model.findByIdAndUpdate(userId, updateQuery);
+        }
+
+        // Update Platform Wallet tracking
+        try {
+            const platformWallet = await PlatformWallet.getWallet();
+            if (userType === 'SELLER') {
+                platformWallet.sellerPendingPayouts += amount;
+            } else {
+                platformWallet.deliveryBoyPendingPayouts += amount;
+            }
+            if (session) {
+                await platformWallet.save({ session });
+            } else {
+                await platformWallet.save();
+            }
+        } catch (pwError) {
+            console.error("Error updating platform wallet in creditWallet:", pwError);
         }
 
         return {
@@ -114,6 +132,23 @@ export const debitWallet = async (
             await Model.findByIdAndUpdate(userId, updateQuery, { session });
         } else {
             await Model.findByIdAndUpdate(userId, updateQuery);
+        }
+
+        // Update Platform Wallet tracking
+        try {
+            const platformWallet = await PlatformWallet.getWallet();
+            if (userType === 'SELLER') {
+                platformWallet.sellerPendingPayouts = Math.max(0, platformWallet.sellerPendingPayouts - amount);
+            } else {
+                platformWallet.deliveryBoyPendingPayouts = Math.max(0, platformWallet.deliveryBoyPendingPayouts - amount);
+            }
+            if (session) {
+                await platformWallet.save({ session });
+            } else {
+                await platformWallet.save();
+            }
+        } catch (pwError) {
+            console.error("Error updating platform wallet in debitWallet:", pwError);
         }
 
         return {

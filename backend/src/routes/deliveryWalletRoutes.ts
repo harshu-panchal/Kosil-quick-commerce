@@ -12,5 +12,7 @@ router.get('/transactions', walletController.getTransactions);
 router.post('/withdraw', walletController.requestWithdrawal);
 router.get('/withdrawals', walletController.getWithdrawals);
 router.get('/commissions', walletController.getCommissions);
+router.post('/payout/create', walletController.createAdminPayoutOrder);
+router.post('/payout/verify', walletController.verifyAdminPayout);
 
 export default router;

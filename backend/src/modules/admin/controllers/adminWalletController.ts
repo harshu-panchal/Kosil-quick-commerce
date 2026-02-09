@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import Commission from '../../../models/Commission';
 import WalletTransaction from '../../../models/WalletTransaction';
 import WithdrawRequest from '../../../models/WithdrawRequest';
+import PlatformWallet from '../../../models/PlatformWallet';
 import { asyncHandler } from '../../../utils/asyncHandler';
 import { approveWithdrawal, rejectWithdrawal, completeWithdrawal } from './adminWithdrawalController';
 
@@ -10,77 +11,20 @@ import { approveWithdrawal, rejectWithdrawal, completeWithdrawal } from './admin
  * Get Financial Dashboard Stats
  */
 export const getFinancialDashboard = asyncHandler(async (_req: Request, res: Response) => {
-  // 1. Total Platform Earnings (GMV - Gross Merchandise Value)
-  // Sum of 'total' from Order collection (Successful orders only ideally, but 'Received'/'Pending' etc also count as revenue booked)
-  // Excluding Cancelled/Rejected/Returned for net GMV? User didn't specify, but usually GMV excludes cancelled.
-  // User said "add 100rs... to total plateform earning" for a new order. So implies all new orders count.
-  const totalGMVResult = await mongoose.model('Order').aggregate([
-    { $match: { status: { $ne: 'Cancelled' }, paymentStatus: 'Paid' } },
-    { $group: { _id: null, total: { $sum: '$total' } } }
-  ]);
-  const totalGMV = totalGMVResult.length > 0 ? totalGMVResult[0].total : 0;
+  const wallet = await PlatformWallet.getWallet();
 
-  // 2. Total Admin Earnings
-  // Formula: SellerCommissions + OrderFees (Platform+Shipping) - DeliveryCommissions
-
-  // A. Seller Commissions (The 10% part)
-  const sellerCommResult = await Commission.aggregate([
-    { $match: { type: 'SELLER', status: { $ne: 'Cancelled' } } },
-    { $group: { _id: null, total: { $sum: '$commissionAmount' } } }
-  ]);
-  const sellerCommissions = sellerCommResult.length > 0 ? sellerCommResult[0].total : 0;
-
-  // B. Delivery Commissions (The part paid to delivery boy)
-  const deliveryCommResult = await Commission.aggregate([
-    { $match: { type: 'DELIVERY_BOY', status: { $ne: 'Cancelled' } } },
-    { $group: { _id: null, total: { $sum: '$commissionAmount' } } }
-  ]);
-  const deliveryCommissions = deliveryCommResult.length > 0 ? deliveryCommResult[0].total : 0;
-
-  // C. Order Fees (Platform Fee + Shipping Charge)
-  const orderFeesResult = await mongoose.model('Order').aggregate([
-    { $match: { status: { $ne: 'Cancelled' }, paymentStatus: 'Paid' } },
-    { $group: { _id: null, total: { $sum: { $add: ['$platformFee', '$shipping'] } } } }
-  ]);
-  const orderFees = orderFeesResult.length > 0 ? orderFeesResult[0].total : 0;
-
-  // Calculation: (SellerComm + PlatformFee + Shipping) - DeliveryComm
-  // This effectively gives: SellerComm + PlatformFee + (Shipping - DeliveryComm) -> where (Shipping-DeliveryComm) is Base Charge
-  const totalAdminEarnings = sellerCommissions + orderFees - deliveryCommissions;
-
-  // Calculate Total Completed Withdrawals (Outflow)
-  const withdrawalResult = await WithdrawRequest.aggregate([
-    { $match: { status: 'Completed' } },
-    { $group: { _id: null, total: { $sum: '$amount' } } }
-  ]);
-  const totalWithdrawals = withdrawalResult.length > 0 ? withdrawalResult[0].total : 0;
-
-  // Current Platform Balance = Total Inflow (GMV) - Total Outflow (Withdrawals)
-  const currentAccountBalance = totalGMV - totalWithdrawals;
-
-  // 3. Total Seller Wallet Pending Payouts -> Sum of Seller Balances
-  const sellerBalanceResult = await mongoose.model('Seller').aggregate([
-    { $match: {} }, // All sellers
-    { $group: { _id: null, total: { $sum: '$balance' } } }
-  ]);
-  const sellerPendingPayouts = sellerBalanceResult.length > 0 ? sellerBalanceResult[0].total : 0;
-
-  // 4. Total Delivery Boy Wallet Pending Payouts -> Sum of Delivery Balances
-  const deliveryBalanceResult = await mongoose.model('Delivery').aggregate([
-    { $match: {} }, // All delivery boys
-    { $group: { _id: null, total: { $sum: '$balance' } } }
-  ]);
-  const deliveryPendingPayouts = deliveryBalanceResult.length > 0 ? deliveryBalanceResult[0].total : 0;
+  // We still calculate some things on the fly or just use wallet
+  // It's better to use wallet for consistency with our new sync logic
 
   return res.status(200).json({
     success: true,
     data: {
-      totalGMV,
-      currentAccountBalance,
-      totalAdminEarnings,
-      sellerPendingPayouts,
-      deliveryPendingPayouts,
-      // Legacy field just in case
+      totalGMV: wallet.totalPlatformEarning,
+      currentAccountBalance: wallet.currentPlatformBalance,
+      totalAdminEarnings: wallet.totalAdminEarning,
+      sellerPendingPayouts: wallet.sellerPendingPayouts,
+      deliveryPendingPayouts: wallet.deliveryBoyPendingPayouts,
+      pendingFromDeliveryBoy: wallet.pendingFromDeliveryBoy,
       pendingWithdrawalsCount: await WithdrawRequest.countDocuments({ status: 'Pending' })
     }
   });

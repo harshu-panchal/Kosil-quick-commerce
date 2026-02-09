@@ -151,21 +151,14 @@ export default function AdminWallet() {
       </div>
 
       {/* Stats Grid */}
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatsCard
           title="Total Platform Earning"
           value={`₹${stats?.totalGMV?.toLocaleString('en-IN') || '0'}`}
           icon={TrendingUpIcon}
           color="text-blue-600"
           bg="bg-blue-50"
-        />
-        <StatsCard
-          title="Current Platform Balance"
-          value={`₹${stats?.currentAccountBalance?.toLocaleString('en-IN') || '0'}`}
-          icon={WalletIcon}
-          color="text-green-600"
-          bg="bg-green-50"
+          label="Total money collected"
         />
         <StatsCard
           title="Total Admin Earning"
@@ -173,20 +166,39 @@ export default function AdminWallet() {
           icon={DollarSignIcon}
           color="text-purple-600"
           bg="bg-purple-50"
+          label="Net profit for platform"
+        />
+        <StatsCard
+          title="Current Platform Balance"
+          value={`₹${stats?.currentAccountBalance?.toLocaleString('en-IN') || '0'}`}
+          icon={WalletIcon}
+          color="text-emerald-600"
+          bg="bg-emerald-50"
+          label="Available for business"
+        />
+        <StatsCard
+          title="Pending from Delivery Boys"
+          value={`₹${stats?.pendingFromDeliveryBoy?.toLocaleString('en-IN') || '0'}`}
+          icon={ClockIcon}
+          color="text-orange-600"
+          bg="bg-orange-50"
+          label="COD cash to be collected"
         />
         <StatsCard
           title="Seller Pending Payouts"
           value={`₹${stats?.sellerPendingPayouts?.toLocaleString('en-IN') || '0'}`}
-          icon={ClockIcon}
-          color="text-orange-600"
-          bg="bg-orange-50"
+          icon={CreditCardIcon}
+          color="text-blue-600"
+          bg="bg-blue-50"
+          label="Owed to sellers"
         />
         <StatsCard
           title="Delivery Boy Pending Payouts"
           value={`₹${stats?.deliveryPendingPayouts?.toLocaleString('en-IN') || '0'}`}
-          icon={ClockIcon}
-          color="text-red-600"
-          bg="bg-red-50"
+          icon={CreditCardIcon}
+          color="text-indigo-600"
+          bg="bg-indigo-50"
+          label="Owed to delivery partners"
         />
       </div>
 
@@ -349,16 +361,30 @@ export default function AdminWallet() {
 
 function StatsCard({ title, value, icon: Icon, color, bg, label }: any) {
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-start justify-between">
+    <motion.div
+      whileHover={{ y: -5 }}
+      className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between h-full transition-all hover:shadow-md"
+    >
+      <div className="flex items-start justify-between mb-4">
+        <div className={`p-3 rounded-xl ${bg} ${color}`}>
+          <Icon className="w-6 h-6" />
+        </div>
+        <div className="flex flex-col items-end">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Live Status</span>
+          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse mt-1"></div>
+        </div>
+      </div>
       <div>
         <p className="text-gray-500 text-sm font-medium mb-1">{title}</p>
-        <h3 className="text-2xl font-bold text-gray-900">{value}</h3>
-        {label && <p className="text-xs text-gray-400 mt-1">{label}</p>}
+        <h3 className="text-2xl font-bold text-gray-900 tracking-tight">{value}</h3>
+        {label && (
+          <div className="mt-3 pt-3 border-t border-gray-50 flex items-center gap-1.5">
+            <div className={`w-1 h-4 rounded-full ${bg.replace('bg-', 'bg-').split(' ')[0]}`} />
+            <p className="text-xs text-gray-400 font-medium">{label}</p>
+          </div>
+        )}
       </div>
-      <div className={`p-3 rounded-lg ${bg}`}>
-        <Icon className={`w-6 h-6 ${color}`} />
-      </div>
-    </div>
+    </motion.div>
   );
 }
 

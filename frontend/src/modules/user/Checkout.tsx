@@ -2146,20 +2146,59 @@ export default function Checkout() {
       {/* Payment Method Selection */}
       <div className="px-4 py-3 border-b border-neutral-200 bg-neutral-50/50">
         <h3 className="text-sm font-bold text-neutral-900 mb-2">Payment Method</h3>
-        <div className="flex items-center gap-3 p-3 rounded-xl border-2 border-green-600 bg-green-50">
-          <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
+        <div className="space-y-2">
+          {/* Online Payment Option */}
+          <div
+            onClick={() => setPaymentMethod("Online")}
+            className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === "Online"
+              ? "border-green-600 bg-green-50"
+              : "border-neutral-200 bg-white"
+              }`}>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${paymentMethod === "Online" ? "bg-green-100 text-green-600" : "bg-neutral-100 text-neutral-500"
+              }`}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="5" width="20" height="14" rx="2" ry="2" />
+                <line x1="2" y1="10" x2="22" y2="10" />
+              </svg>
+            </div>
+            <div>
+              <span className={`text-xs font-bold block ${paymentMethod === "Online" ? "text-green-700" : "text-neutral-900"}`}>Online Payment</span>
+              <span className="text-[10px] text-neutral-500">Secure payment via Razorpay</span>
+            </div>
+            {paymentMethod === "Online" && (
+              <div className="ml-auto">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+            )}
           </div>
-          <div>
-            <span className="text-xs font-bold text-green-700 block">Online Payment</span>
-            <span className="text-[10px] text-green-600">Secure payment via Razorpay</span>
-          </div>
-          <div className="ml-auto">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
+
+          {/* COD Option */}
+          <div
+            onClick={() => setPaymentMethod("COD")}
+            className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === "COD"
+              ? "border-green-600 bg-green-50"
+              : "border-neutral-200 bg-white"
+              }`}>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${paymentMethod === "COD" ? "bg-green-100 text-green-600" : "bg-neutral-100 text-neutral-500"
+              }`}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                <line x1="1" y1="10" x2="23" y2="10" />
+              </svg>
+            </div>
+            <div>
+              <span className={`text-xs font-bold block ${paymentMethod === "COD" ? "text-green-700" : "text-neutral-900"}`}>Cash on Delivery</span>
+              <span className="text-[10px] text-neutral-500">Pay when you receive your order</span>
+            </div>
+            {paymentMethod === "COD" && (
+              <div className="ml-auto">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -2303,30 +2342,32 @@ export default function Checkout() {
       </div>
 
       {/* Razorpay Checkout Modal */}
-      {showRazorpayCheckout && pendingOrderId && user && (
-        <RazorpayCheckout
-          orderId={pendingOrderId}
-          amount={grandTotal}
-          customerDetails={{
-            name: user.name || "Customer",
-            email: user.email || "",
-            phone: user.phone || "",
-          }}
-          onSuccess={(paymentId) => {
-            setShowRazorpayCheckout(false);
-            setPlacedOrderId(pendingOrderId);
-            setPendingOrderId(null);
-            clearCart();
-            setShowOrderSuccess(true);
-            showGlobalToast("Payment successful!", "success");
-          }}
-          onFailure={(error) => {
-            setShowRazorpayCheckout(false);
-            setPendingOrderId(null);
-            showGlobalToast(error || "Payment failed. Please try again.", "error");
-          }}
-        />
-      )}
+      {
+        showRazorpayCheckout && pendingOrderId && user && (
+          <RazorpayCheckout
+            orderId={pendingOrderId}
+            amount={grandTotal}
+            customerDetails={{
+              name: user.name || "Customer",
+              email: user.email || "",
+              phone: user.phone || "",
+            }}
+            onSuccess={(paymentId) => {
+              setShowRazorpayCheckout(false);
+              setPlacedOrderId(pendingOrderId);
+              setPendingOrderId(null);
+              clearCart();
+              setShowOrderSuccess(true);
+              showGlobalToast("Payment successful!", "success");
+            }}
+            onFailure={(error) => {
+              setShowRazorpayCheckout(false);
+              setPendingOrderId(null);
+              showGlobalToast(error || "Payment failed. Please try again.", "error");
+            }}
+          />
+        )
+      }
       {/* Animation Styles */}
       <style>{`
         @keyframes fadeIn {
@@ -2413,6 +2454,6 @@ export default function Checkout() {
           stroke-dashoffset: 0;
         }
       `}</style>
-    </div>
+    </div >
   );
 }

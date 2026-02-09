@@ -135,8 +135,8 @@ export const createOrder = async (req: Request, res: Response) => {
                 latitude: deliveryLat,
                 longitude: deliveryLng,
             },
-            paymentMethod: 'Online', // COD is disabled as per requirements
-            paymentStatus: 'Pending',
+            paymentMethod: paymentMethod || 'Online',
+            paymentStatus: (paymentMethod === 'COD') ? 'Pending' : 'Pending', // For Online it would be Paid after gateway, for COD it's always Pending until delivery
             status: 'Received',
             subtotal: 0,
             tax: 0,

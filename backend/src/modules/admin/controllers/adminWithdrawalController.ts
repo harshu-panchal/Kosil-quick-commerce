@@ -251,6 +251,24 @@ export const completeWithdrawal = async (req: Request, res: Response) => {
         }], { session });
 
 
+        // Update Platform Wallet tracking
+        try {
+            const PlatformWallet = mongoose.model('PlatformWallet') as any;
+            const platformWallet = await PlatformWallet.getWallet();
+
+            platformWallet.currentPlatformBalance -= request.amount;
+            if (request.userType === 'SELLER') {
+                platformWallet.sellerPendingPayouts -= request.amount;
+            } else {
+                platformWallet.deliveryBoyPendingPayouts -= request.amount;
+            }
+
+            await platformWallet.save({ session });
+        } catch (pwError) {
+            console.error("Error updating platform wallet in completeWithdrawal:", pwError);
+            // We don't abort here because the main withdrawal succeeded
+        }
+
         // Update request
         request.status = 'Completed';
         request.transactionReference = transactionReference;
