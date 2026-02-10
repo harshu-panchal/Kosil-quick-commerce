@@ -4,6 +4,11 @@ export interface HomeSection {
     _id: string;
     title: string;
     slug: string;
+    pageLocation: "home" | "header_category";
+    headerCategoryId?: {
+        _id: string;
+        name: string;
+    } | string;
     categories?: Array<{
         _id: string;
         name: string;
@@ -26,6 +31,8 @@ export interface HomeSection {
 export interface HomeSectionFormData {
     title: string;
     slug: string;
+    pageLocation: "home" | "header_category";
+    headerCategoryId?: string;
     categories?: string[];
     subCategories?: string[];
     displayType: "subcategories" | "products" | "categories";
