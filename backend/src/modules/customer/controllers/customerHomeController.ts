@@ -22,14 +22,54 @@ async function fetchSectionData(
     const { categories, subCategories, displayType, limit } = section;
 
     // If displayType is "subcategories", fetch subcategories
-    if (
-      displayType === "subcategories" &&
-      categories &&
-      categories.length > 0
-    ) {
-      const categoryIds = categories.map((cat: any) => cat._id || cat);
+    if (displayType === "subcategories") {
+      const categoryIds = (categories || [])
+        .map((cat: any) => (cat ? cat._id || cat : null))
+        .filter((id: any) => id);
+      const subCategoryIds = (subCategories || [])
+        .map((sub: any) => (sub ? sub._id || sub : null))
+        .filter((id: any) => id);
 
-      const subcategories = await SubCategory.find({
+      console.log(`[fetchSectionData] Fetching subcategories for section "${section.title}"`, {
+        categoryIds,
+        subCategoryIds
+      });
+
+      // Query Category model instead of SubCategory, as subcategories were migrated to Category
+      const query: any = { status: "Active" };
+
+      if (categoryIds.length > 0 && subCategoryIds.length > 0) {
+        query.$or = [{ parentId: { $in: categoryIds } }, { _id: { $in: subCategoryIds } }];
+      } else if (categoryIds.length > 0) {
+        query.parentId = { $in: categoryIds };
+      } else if (subCategoryIds.length > 0) {
+        query._id = { $in: subCategoryIds };
+      } else {
+        return [];
+      }
+
+      const subcategoryDocs = await Category.find(query)
+        .select("name image order slug parentId")
+        .sort({ order: 1 })
+        .limit(limit || 12)
+        .lean();
+
+      console.log(`[fetchSectionData] Found ${subcategoryDocs.length} subcategories in Category model`);
+
+      if (subcategoryDocs.length > 0) {
+        return subcategoryDocs.map((sub: any) => ({
+          id: sub._id.toString(),
+          subcategoryId: sub._id.toString(),
+          categoryId: sub.parentId?.toString() || "",
+          name: sub.name,
+          image: sub.image || "",
+          slug: sub.slug || sub.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+          type: "subcategory",
+        }));
+      }
+
+      // Fallback: Try fetching from SubCategory model (legacy)
+      const legacySubcategories = await SubCategory.find({
         category: { $in: categoryIds },
       })
         .select("name image order category")
@@ -37,7 +77,7 @@ async function fetchSectionData(
         .limit(limit || 10)
         .lean();
 
-      return subcategories.map((sub: any) => ({
+      return legacySubcategories.map((sub: any) => ({
         id: sub._id.toString(),
         subcategoryId: sub._id.toString(),
         categoryId: sub.category?.toString() || "",
@@ -101,8 +141,8 @@ async function fetchSectionData(
         const isAvailable =
           nearbySellerIds && nearbySellerIds.length > 0 && p.seller
             ? nearbySellerIds.some(
-                (id) => id.toString() === p.seller.toString(),
-              )
+              (id) => id.toString() === p.seller.toString(),
+            )
             : false;
 
         return {
@@ -279,8 +319,8 @@ export const getHomeContent = async (req: Request, res: Response) => {
         const isAvailable =
           nearbySellerIds && nearbySellerIds.length > 0 && product.seller
             ? nearbySellerIds.some(
-                (id) => id.toString() === product.seller.toString(),
-              )
+              (id) => id.toString() === product.seller.toString(),
+            )
             : false;
 
         return {
@@ -455,44 +495,66 @@ export const getHomeContent = async (req: Request, res: Response) => {
       promoCards.length > 0
         ? promoCards
         : [
-            {
-              id: "self-care",
-              badge: "Up to 55% OFF",
-              title: "Self Care & Wellness",
-              categoryId: "personal-care",
-              bgColor: "bg-yellow-50",
-              subcategoryImages: [],
-            },
-            {
-              id: "hot-meals",
-              badge: "Up to 55% OFF",
-              title: "Hot Meals & Drinks",
-              categoryId: "breakfast-instant",
-              bgColor: "bg-yellow-50",
-              subcategoryImages: [],
-            },
-            {
-              id: "kitchen-essentials",
-              badge: "Up to 55% OFF",
-              title: "Kitchen Essentials",
-              categoryId: "atta-rice",
-              bgColor: "bg-yellow-50",
-              subcategoryImages: [],
-            },
-            {
-              id: "cleaning-home",
-              badge: "Up to 75% OFF",
-              title: "Cleaning & Home Needs",
-              categoryId: "household",
-              bgColor: "bg-yellow-50",
-              subcategoryImages: [],
-            },
-          ];
+          {
+            id: "self-care",
+            badge: "Up to 55% OFF",
+            title: "Self Care & Wellness",
+            categoryId: "personal-care",
+            bgColor: "bg-yellow-50",
+            subcategoryImages: [],
+          },
+          {
+            id: "hot-meals",
+            badge: "Up to 55% OFF",
+            title: "Hot Meals & Drinks",
+            categoryId: "breakfast-instant",
+            bgColor: "bg-yellow-50",
+            subcategoryImages: [],
+          },
+          {
+            id: "kitchen-essentials",
+            badge: "Up to 55% OFF",
+            title: "Kitchen Essentials",
+            categoryId: "atta-rice",
+            bgColor: "bg-yellow-50",
+            subcategoryImages: [],
+          },
+          {
+            id: "cleaning-home",
+            badge: "Up to 75% OFF",
+            title: "Cleaning & Home Needs",
+            categoryId: "household",
+            bgColor: "bg-yellow-50",
+            subcategoryImages: [],
+          },
+        ];
 
     // 9. Dynamic Home Sections - Fetch from database
-    const homeSections = await HomeSection.find({ isActive: true })
+    // Filter by pageLocation: "home" if we are on the main home page
+    const homeSectionQuery: any = { isActive: true };
+
+    if (headerCategorySlug && headerCategorySlug !== "all") {
+      // If we are on a header category page, find the header category ID
+      const headerCategory = await HeaderCategory.findOne({
+        slug: headerCategorySlug,
+        status: "Published",
+      }).lean();
+
+      if (headerCategory) {
+        homeSectionQuery.pageLocation = "header_category";
+        homeSectionQuery.headerCategoryId = headerCategory._id;
+      } else {
+        // Fallback to home page sections if header category not found
+        homeSectionQuery.pageLocation = "home";
+      }
+    } else {
+      homeSectionQuery.pageLocation = "home";
+    }
+
+    const homeSections = await HomeSection.find(homeSectionQuery)
       .populate("categories", "name slug image")
       .populate("subCategories", "name")
+      .populate("headerCategoryId", "name")
       .sort({ order: 1 })
       .lean();
 
@@ -544,8 +606,8 @@ export const getHomeContent = async (req: Request, res: Response) => {
           const isAvailable =
             nearbySellerIds && nearbySellerIds.length > 0 && p.seller
               ? nearbySellerIds.some(
-                  (id) => id.toString() === p.seller.toString(),
-                )
+                (id) => id.toString() === p.seller.toString(),
+              )
               : false;
           return { ...p, isAvailable };
         });
@@ -578,19 +640,19 @@ export const getHomeContent = async (req: Request, res: Response) => {
           banners.length > 0
             ? banners
             : [
-                {
-                  id: 1,
-                  image:
-                    "https://img.freepik.com/free-vector/horizontal-banner-template-grocery-sales_23-2149432421.jpg",
-                  link: "/category/grocery",
-                },
-                {
-                  id: 2,
-                  image:
-                    "https://img.freepik.com/free-vector/flat-supermarket-social-media-cover-template_23-2149363385.jpg",
-                  link: "/category/snacks",
-                },
-              ],
+              {
+                id: 1,
+                image:
+                  "https://img.freepik.com/free-vector/horizontal-banner-template-grocery-sales_23-2149432421.jpg",
+                link: "/category/grocery",
+              },
+              {
+                id: 2,
+                image:
+                  "https://img.freepik.com/free-vector/flat-supermarket-social-media-cover-template_23-2149363385.jpg",
+                link: "/category/snacks",
+              },
+            ],
         trending,
         cookingIdeas,
         promoCards: finalPromoCards, // Return dynamic or fallback cards
@@ -642,11 +704,11 @@ export const getStoreProducts = async (req: Request, res: Response) => {
       `[getStoreProducts] Shop found:`,
       shop
         ? {
-            name: shop.name,
-            productsCount: shop.products?.length || 0,
-            category: shop.category,
-            image: shop.image,
-          }
+          name: shop.name,
+          productsCount: shop.products?.length || 0,
+          category: shop.category,
+          image: shop.image,
+        }
         : "NOT FOUND",
     );
 

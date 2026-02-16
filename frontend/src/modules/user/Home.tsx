@@ -46,7 +46,7 @@ export default function Home() {
         setLoading(true);
         setError(null);
         const response = await getHomeContent(
-          undefined,
+          activeTab,
           location?.latitude,
           location?.longitude,
         );
@@ -115,7 +115,7 @@ export default function Home() {
     };
 
     preloadHeaderCategories();
-  }, [location?.latitude, location?.longitude]);
+  }, [location?.latitude, location?.longitude, activeTab]);
 
   const getFilteredProducts = (tabId: string) => {
     if (tabId === "all") {
@@ -192,8 +192,8 @@ export default function Home() {
       <div
         ref={contentRef}
         className="bg-neutral-50 -mt-2 pt-1 space-y-5 md:space-y-8 md:pt-4">
-        {/* Filtered Products Section */}
-        {activeTab !== "all" && (
+        {/* Filtered Products Section (from bestsellers) */}
+        {activeTab !== "all" && filteredProducts.length > 0 && (
           <div data-products-section className="mt-6 mb-6 md:mt-8 md:mb-8">
             <h2 className="text-lg md:text-2xl font-semibold text-neutral-900 mb-3 md:mb-6 px-4 md:px-6 lg:px-8 tracking-tight capitalize">
               {activeTab === "grocery" ? "Grocery Items" : activeTab}
@@ -224,38 +224,41 @@ export default function Home() {
           </div>
         )}
 
-        {/* Bestsellers Section */}
-        {activeTab === "all" && (
+        {/* Content Sections */}
+        {(activeTab === "all" || (homeData.homeSections && homeData.homeSections.length > 0)) && (
           <>
-            <div className="mt-2 md:mt-4">
-              <CategoryTileSection
-                title="Bestsellers"
-                tiles={
-                  homeData.bestsellers && homeData.bestsellers.length > 0
-                    ? homeData.bestsellers.slice(0, 6).map((card: any) => {
-                        // Bestseller cards have categoryId and productImages array from backend
-                        return {
+            {/* Sections only for 'All' tab */}
+            {activeTab === "all" && (
+              <>
+                <div className="mt-2 md:mt-4">
+                  <CategoryTileSection
+                    title="Bestsellers"
+                    tiles={
+                      homeData.bestsellers && homeData.bestsellers.length > 0
+                        ? homeData.bestsellers.slice(0, 6).map((card: any) => ({
                           id: card.id,
                           categoryId: card.categoryId,
                           name: card.name || "Category",
                           productImages: card.productImages || [],
                           productCount: card.productCount || 0,
-                        };
-                      })
-                    : []
-                }
-                columns={3}
-                showProductCount={true}
-              />
-            </div>
+                        }))
+                        : []
+                    }
+                    columns={3}
+                    showProductCount={true}
+                  />
+                </div>
 
-            {/* Featured this week Section */}
-            <FeaturedThisWeek />
+                <FeaturedThisWeek />
+              </>
+            )}
 
-            {/* Dynamic Home Sections - Render sections created by admin */}
+            {/* Dynamic Home Sections - Render sections created by admin (all tabs) */}
             {homeData.homeSections && homeData.homeSections.length > 0 && (
               <>
                 {homeData.homeSections.map((section: any) => {
+                  if (!section.data || section.data.length === 0) return null;
+
                   const columnCount = Number(section.columns) || 4;
 
                   if (
@@ -263,7 +266,6 @@ export default function Home() {
                     section.data &&
                     section.data.length > 0
                   ) {
-                    // Strict column mapping as requested - applies to ALL screen sizes including mobile
                     const gridClass =
                       {
                         2: "grid-cols-2",
@@ -273,15 +275,11 @@ export default function Home() {
                         8: "grid-cols-8",
                       }[columnCount] || "grid-cols-4";
 
-                    // Use compact mode for 4 or more columns to fit content on mobile
                     const isCompact = columnCount >= 4;
-                    const gapClass =
-                      columnCount >= 4 ? "gap-2" : "gap-3 md:gap-4";
+                    const gapClass = columnCount >= 4 ? "gap-2" : "gap-3 md:gap-4";
 
                     return (
-                      <div
-                        key={section.id}
-                        className="mt-6 mb-6 md:mt-8 md:mb-8">
+                      <div key={section.id} className="mt-6 mb-6 md:mt-8 md:mb-8">
                         {section.title && (
                           <h2 className="text-lg md:text-2xl font-semibold text-neutral-900 mb-3 md:mb-6 px-4 md:px-6 lg:px-8 tracking-tight capitalize">
                             {section.title}
@@ -319,64 +317,62 @@ export default function Home() {
               </>
             )}
 
-            {/* Shop by Store Section */}
-            <div className="mb-6 mt-6 md:mb-8 md:mt-8">
-              <h2 className="text-lg md:text-2xl font-semibold text-neutral-900 mb-3 md:mb-6 px-4 md:px-6 lg:px-8 tracking-tight">
-                Shop by Store
-              </h2>
-              <div className="px-4 md:px-6 lg:px-8">
-                <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 md:gap-4">
-                  {(homeData.shops || []).map((tile: any) => {
-                    const hasImages =
-                      tile.image ||
-                      (tile.productImages &&
-                        tile.productImages.filter(Boolean).length > 0);
+            {/* Shop by Store Section - only on 'all' tab */}
+            {activeTab === "all" && (
+              <div className="mb-6 mt-6 md:mb-8 md:mt-8">
+                <h2 className="text-lg md:text-2xl font-semibold text-neutral-900 mb-3 md:mb-6 px-4 md:px-6 lg:px-8 tracking-tight">
+                  Shop by Store
+                </h2>
+                <div className="px-4 md:px-6 lg:px-8">
+                  <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 md:gap-4">
+                    {(homeData.shops || []).map((tile: any) => {
+                      const hasImages =
+                        tile.image ||
+                        (tile.productImages &&
+                          tile.productImages.filter(Boolean).length > 0);
 
-                    return (
-                      <div key={tile.id} className="flex flex-col">
-                        <div
-                          onClick={() => {
-                            const storeSlug =
-                              tile.slug || tile.id.replace("-store", "");
-                            navigate(`/store/${storeSlug}`);
-                          }}
-                          className="block bg-white rounded-xl shadow-sm border border-neutral-200 hover:shadow-md transition-shadow cursor-pointer overflow-hidden">
-                          {hasImages ? (
-                            <img
-                              src={
-                                tile.image ||
-                                (tile.productImages
-                                  ? tile.productImages[0]
-                                  : "")
-                              }
-                              alt={tile.name}
-                              className="w-full h-16 object-cover"
-                            />
-                          ) : (
-                            <div
-                              className={`w-full h-16 flex items-center justify-center text-3xl text-neutral-300 ${
-                                tile.bgColor || "bg-neutral-50"
-                              }`}>
-                              {tile.name.charAt(0)}
-                            </div>
-                          )}
-                        </div>
+                      return (
+                        <div key={tile.id} className="flex flex-col">
+                          <div
+                            onClick={() => {
+                              const storeSlug =
+                                tile.slug || tile.id.replace("-store", "");
+                              navigate(`/store/${storeSlug}`);
+                            }}
+                            className="block bg-white rounded-xl shadow-sm border border-neutral-200 hover:shadow-md transition-shadow cursor-pointer overflow-hidden">
+                            {hasImages ? (
+                              <img
+                                src={
+                                  tile.image ||
+                                  (tile.productImages ? tile.productImages[0] : "")
+                                }
+                                alt={tile.name}
+                                className="w-full h-16 object-cover"
+                              />
+                            ) : (
+                              <div
+                                className={`w-full h-16 flex items-center justify-center text-3xl text-neutral-300 ${tile.bgColor || "bg-neutral-50"
+                                  }`}>
+                                {tile.name.charAt(0)}
+                              </div>
+                            )}
+                          </div>
 
-                        {/* Tile name - outside card */}
-                        <div className="mt-1.5 text-center">
-                          <span className="text-xs font-semibold text-neutral-900 line-clamp-2 leading-tight">
-                            {tile.name}
-                          </span>
+                          <div className="mt-1.5 text-center">
+                            <span className="text-xs font-semibold text-neutral-900 line-clamp-2 leading-tight">
+                              {tile.name}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </>
         )}
       </div>
-    </div>
+    </div >
   );
 }

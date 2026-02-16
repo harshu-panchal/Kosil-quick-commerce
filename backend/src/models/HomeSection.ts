@@ -3,6 +3,8 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface IHomeSection extends Document {
     title: string;
     slug: string;
+    pageLocation: "home" | "header_category";
+    headerCategoryId?: mongoose.Types.ObjectId;
     categories?: mongoose.Types.ObjectId[]; // Changed to array
     subCategories?: mongoose.Types.ObjectId[]; // Changed to array
     products?: mongoose.Types.ObjectId[]; // Manual product selection
@@ -30,6 +32,17 @@ const HomeSectionSchema = new Schema<IHomeSection>(
             trim: true,
             lowercase: true,
             match: [/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens"],
+        },
+        pageLocation: {
+            type: String,
+            enum: ["home", "header_category"],
+            required: [true, "Page location is required"],
+            default: "home",
+        },
+        headerCategoryId: {
+            type: Schema.Types.ObjectId,
+            ref: "HeaderCategory",
+            default: null,
         },
         categories: {
             type: [{ type: Schema.Types.ObjectId, ref: "Category" }],
@@ -81,7 +94,7 @@ const HomeSectionSchema = new Schema<IHomeSection>(
 // Indexes for better query performance
 HomeSectionSchema.index({ order: 1, isActive: 1 });
 HomeSectionSchema.index({ slug: 1 });
-HomeSectionSchema.index({ category: 1 });
+HomeSectionSchema.index({ categories: 1 });
 
 const HomeSection = mongoose.model<IHomeSection>("HomeSection", HomeSectionSchema);
 
