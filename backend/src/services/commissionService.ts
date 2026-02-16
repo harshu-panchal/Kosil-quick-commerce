@@ -82,9 +82,8 @@ export const getSellerCommissionRate = async (
         }
 
         const settings = await AppSettings.findOne();
-        // @ts-ignore
-        return settings && settings.globalCommissionRate !== undefined
-            ? settings.globalCommissionRate
+        return settings && settings.defaultCommission !== undefined
+            ? settings.defaultCommission
             : 10;
     } catch (error) {
         console.error("Error getting seller commission rate:", error);
