@@ -52,6 +52,25 @@ export const getHomeContent = async (
   return fetchFn();
 };
 
+export interface CheckServiceAreaResponse {
+  success: boolean;
+  hasSellersInRange: boolean;
+}
+
+/**
+ * Check if user's location is within any seller's service radius
+ */
+export const checkServiceArea = async (
+  latitude: number,
+  longitude: number
+): Promise<CheckServiceAreaResponse> => {
+  const response = await api.get<CheckServiceAreaResponse>(
+    "/customer/home/check-service-area",
+    { params: { latitude, longitude } }
+  );
+  return response.data;
+};
+
 /**
  * Get products for a specific "shop" (e.g. Spiritual Store)
  */

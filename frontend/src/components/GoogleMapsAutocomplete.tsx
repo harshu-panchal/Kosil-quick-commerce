@@ -45,7 +45,9 @@ export default function GoogleMapsAutocomplete({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const autocompleteRef = useRef<any>(null);
   const [error, setError] = useState<string>('');
-  const [inputValue, setInputValue] = useState(value);
+  const [displayValue, setDisplayValue] = useState(value);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   // Use the same loader configuration as LocationPickerMap
   const { isLoaded, loadError } = useJsApiLoader({
@@ -54,9 +56,8 @@ export default function GoogleMapsAutocomplete({
     libraries: libraries,
   });
 
-  // Update local input value when prop changes
   useEffect(() => {
-    setInputValue(value);
+    setDisplayValue(value);
   }, [value]);
 
   useEffect(() => {
@@ -103,10 +104,6 @@ export default function GoogleMapsAutocomplete({
 
         const lat = place.geometry.location.lat();
         const lng = place.geometry.location.lng();
-        const rawAddress = place.formatted_address || place.name || inputRef.current?.value || '';
-        const address = cleanAddress(rawAddress);
-        const placeName = place.name || address;
-
         let city = '';
         let state = '';
 
@@ -122,8 +119,20 @@ export default function GoogleMapsAutocomplete({
           }
         }
 
-        setInputValue(address);
-        onChange(address, lat, lng, placeName, { city, state });
+        // Use only place data for saved address – never the input's current text (e.g. "kol")
+        let rawAddress = place.formatted_address || place.name || '';
+        if (!rawAddress && (city || state)) {
+          rawAddress = [place.name, city, state].filter(Boolean).join(', ');
+        }
+        if (!rawAddress) {
+          setError('Could not get address for this place. Please try another selection.');
+          return;
+        }
+        const address = cleanAddress(rawAddress);
+        const placeName = place.name || address;
+
+        setDisplayValue(address);
+        onChangeRef.current(address, lat, lng, placeName, { city, state });
         setError('');
       });
     } catch (err: unknown) {
@@ -131,7 +140,7 @@ export default function GoogleMapsAutocomplete({
       console.error('Autocomplete initialization error:', err);
       setError(`Failed to initialize autocomplete: ${errorMessage}`);
     }
-  }, [onChange]); // Removed 'value' from dependencies
+  }, []); // No deps: listener uses onChangeRef.current so it always has latest onChange
 
   useEffect(() => {
     if (isLoaded && inputRef.current && !autocompleteRef.current) {
@@ -154,11 +163,8 @@ export default function GoogleMapsAutocomplete({
       <input
         ref={inputRef}
         type="text"
-        value={inputValue}
-        onChange={(e) => {
-          setInputValue(e.target.value);
-          onChange(e.target.value, 0, 0, e.target.value);
-        }}
+        value={displayValue}
+        onChange={(e) => setDisplayValue(e.target.value)}
         placeholder={placeholder}
         className={`w-full px-3 py-2 border border-neutral-300 rounded-lg placeholder:text-neutral-400 focus:outline-none focus:border-orange-500 bg-white ${className}`}
         disabled={disabled || !isLoaded}

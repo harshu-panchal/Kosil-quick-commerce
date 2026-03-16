@@ -33,34 +33,17 @@ export const getProducts = async (req: Request, res: Response) => {
       ],
     };
 
-    // Location-based filtering: Only show products from sellers within user's range
+    // Location: get nearby seller IDs to mark products as available vs "Coming Soon"
     const userLat = latitude ? parseFloat(latitude as string) : null;
     const userLng = longitude ? parseFloat(longitude as string) : null;
 
+    let nearbySellerIds: mongoose.Types.ObjectId[] = [];
     if (userLat && userLng && !isNaN(userLat) && !isNaN(userLng)) {
-      // Find sellers within user's location range
-      const nearbySellerIds = await findSellersWithinRange(userLat, userLng);
+      nearbySellerIds = await findSellersWithinRange(userLat, userLng);
+    }
 
-      if (nearbySellerIds.length === 0) {
-        // No sellers within range, return empty result
-        return res.status(200).json({
-          success: true,
-          data: [],
-          pagination: {
-            page: Number(page),
-            limit: Number(limit),
-            total: 0,
-            pages: 0,
-          },
-          message:
-            "No sellers available in your area. Please update your location.",
-        });
-      }
-
-      // Filter products by sellers within range
-      query.seller = { $in: nearbySellerIds };
-    } else {
-      // If no location provided, return empty result (strictly enforce location)
+    // If no location provided, return empty (location required to see products)
+    if (!userLat || !userLng || isNaN(userLat) || isNaN(userLng)) {
       return res.status(200).json({
         success: true,
         data: [],
@@ -73,6 +56,8 @@ export const getProducts = async (req: Request, res: Response) => {
         message: "Please provide your location to see products available in your area.",
       });
     }
+
+    // Do not filter by seller here: show all matching products and mark isAvailable by radius
 
     // Helper to resolve category/subcategory ID from slug or ID
     const resolveId = async (
@@ -195,13 +180,22 @@ export const getProducts = async (req: Request, res: Response) => {
       .populate("seller", "storeName")
       .sort(sortOptions)
       .skip(skip)
-      .limit(Number(limit));
+      .limit(Number(limit))
+      .lean();
 
     const total = await Product.countDocuments(query);
 
+    const sellerIdFrom = (p: any) =>
+      p.seller?._id?.toString() ?? p.seller?.toString() ?? "";
+
     return res.status(200).json({
       success: true,
-      data: products,
+      data: products.map((p: any) => ({
+        ...p,
+        isAvailable: nearbySellerIds.some(
+          (id) => id.toString() === sellerIdFrom(p)
+        ),
+      })),
       pagination: {
         page: Number(page),
         limit: Number(limit),

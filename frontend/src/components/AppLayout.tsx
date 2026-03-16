@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import FloatingCartPill from './FloatingCartPill';
 import { useLocation as useLocationContext } from '../hooks/useLocation';
 import LocationPermissionRequest from './LocationPermissionRequest';
+import ComingSoonScreen from './ComingSoonScreen';
 import { useThemeContext } from '../context/ThemeContext';
 
 interface AppLayoutProps {
@@ -18,7 +19,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [categoriesRotation, setCategoriesRotation] = useState(0);
   const [prevCategoriesActive, setPrevCategoriesActive] = useState(false);
-  const { isLocationEnabled, isLocationLoading, location: userLocation } = useLocationContext();
+  const { isLocationEnabled, isLocationLoading, location: userLocation, hasSellersInRange, isServiceAreaLoading } = useLocationContext();
   const [showLocationRequest, setShowLocationRequest] = useState(false);
   const [showLocationChangeModal, setShowLocationChangeModal] = useState(false);
   const { currentTheme } = useThemeContext();
@@ -122,11 +123,17 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const showSearchBar = isSearchPage && !isCheckoutPage && !isCartPage;
   const showFooter = !isCheckoutPage && !isProductDetailPage;
 
+  const showComingSoon = Boolean(userLocation && hasSellersInRange === false);
+
   return (
     <div className="flex flex-col min-h-screen w-full overflow-x-hidden">
       {/* Desktop Container Wrapper */}
       <div className="md:w-full md:bg-white md:min-h-screen overflow-x-hidden">
         <div className="md:w-full md:min-h-screen md:flex md:flex-col overflow-x-hidden">
+          {showComingSoon ? (
+            <ComingSoonScreen onChangeLocation={() => setShowLocationChangeModal(true)} />
+          ) : (
+            <>
           {/* Top Navigation Bar - Desktop Only */}
           {showFooter && (
             <nav
@@ -319,6 +326,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
           {/* Floating Cart Pill */}
           <FloatingCartPill />
+            </>
+          )}
 
           {/* Location Permission Request Modal - Mandatory for all users */}
           {showLocationRequest && (
@@ -330,13 +339,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
             />
           )}
 
-          {/* Location Change Modal */}
+          {/* Location Change Modal – same UI as "Location Access Required", allows updating location (e.g. from Coming Soon screen) */}
           {showLocationChangeModal && (
             <LocationPermissionRequest
               onLocationGranted={() => setShowLocationChangeModal(false)}
               skipable={true}
+              isChangeMode={true}
               title="Change Location"
-              description="Update your location to see products available near you."
+              description="We need your location to show you products available near you and enable delivery services. Update your location below."
             />
           )}
 

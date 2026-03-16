@@ -1,6 +1,7 @@
 import { useState, useEffect, ReactNode, useRef, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import api from '../services/api/config';
+import { checkServiceArea } from '../services/api/customerHomeService';
 import { LocationContext, Location } from './locationContext.types';
 
 // Geocoding result interface
@@ -63,6 +64,9 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const [isLocationLoading, setIsLocationLoading] = useState(true);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [locationPermissionStatus, setLocationPermissionStatus] = useState<'granted' | 'denied' | 'prompt' | 'session_granted'>('prompt');
+  const [hasSellersInRange, setHasSellersInRange] = useState<boolean | null>(null);
+  const [isServiceAreaLoading, setIsServiceAreaLoading] = useState(false);
+  const lastServiceAreaCoordsRef = useRef<string | null>(null);
 
   // Constants for storage
   const SESSION_PERMISSION_KEY = 'location_permission_granted_session';
@@ -118,6 +122,43 @@ export function LocationProvider({ children }: { children: ReactNode }) {
 
     checkInitialPermission();
   }, []);
+
+  // Check if user's location is within any seller's service radius when location is set
+  useEffect(() => {
+    const lat = location?.latitude;
+    const lng = location?.longitude;
+    if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) {
+      setHasSellersInRange(null);
+      lastServiceAreaCoordsRef.current = null;
+      return;
+    }
+    const coordsKey = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+    if (lastServiceAreaCoordsRef.current === coordsKey) {
+      return;
+    }
+    lastServiceAreaCoordsRef.current = coordsKey;
+    let cancelled = false;
+    setIsServiceAreaLoading(true);
+    checkServiceArea(lat, lng)
+      .then((res) => {
+        if (!cancelled && res.success) {
+          setHasSellersInRange(res.hasSellersInRange);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setHasSellersInRange(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsServiceAreaLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [location?.latitude, location?.longitude]);
 
   // Request user's current location - OPTIMIZED for speed and accuracy
   const requestLocation = useCallback(async (): Promise<void> => {
@@ -585,6 +626,8 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     setLocation(null);
     setIsLocationEnabled(false);
     setLocationPermissionStatus('prompt');
+    setHasSellersInRange(null);
+    lastServiceAreaCoordsRef.current = null;
     localStorage.removeItem(LOCATION_STORAGE_KEY);
     sessionStorage.removeItem(SESSION_PERMISSION_KEY);
   }, [SESSION_PERMISSION_KEY, LOCATION_STORAGE_KEY]);
@@ -607,6 +650,8 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         isLocationLoading,
         locationError,
         locationPermissionStatus,
+        hasSellersInRange,
+        isServiceAreaLoading,
         requestLocation,
         updateLocation,
         clearLocation,

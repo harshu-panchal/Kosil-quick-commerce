@@ -668,6 +668,43 @@ export const getHomeContent = async (req: Request, res: Response) => {
   }
 };
 
+// Check if user's location is within any seller's service radius
+export const checkServiceArea = async (req: Request, res: Response) => {
+  try {
+    const { latitude, longitude } = req.query;
+    const userLat = latitude ? parseFloat(latitude as string) : null;
+    const userLng = longitude ? parseFloat(longitude as string) : null;
+
+    if (
+      userLat == null ||
+      userLng == null ||
+      isNaN(userLat) ||
+      isNaN(userLng) ||
+      userLat < -90 ||
+      userLat > 90 ||
+      userLng < -180 ||
+      userLng > 180
+    ) {
+      return res.status(200).json({
+        success: true,
+        hasSellersInRange: false,
+      });
+    }
+
+    const nearbySellerIds = await findSellersWithinRange(userLat, userLng);
+    return res.status(200).json({
+      success: true,
+      hasSellersInRange: nearbySellerIds.length > 0,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: "Error checking service area",
+      error: error.message,
+    });
+  }
+};
+
 // Get Products for a specific "Store" (Campaign/Collection)
 // Fetch products based on store configuration from database
 export const getStoreProducts = async (req: Request, res: Response) => {
@@ -813,7 +850,7 @@ export const getStoreProducts = async (req: Request, res: Response) => {
       }
     }
 
-    // Location-based filtering: Only show products from sellers within user's range
+    // Location: mark products as available or "Coming Soon" based on seller radius
     const userLat = latitude ? parseFloat(latitude as string) : null;
     const userLng = longitude ? parseFloat(longitude as string) : null;
 
@@ -821,54 +858,14 @@ export const getStoreProducts = async (req: Request, res: Response) => {
       `[getStoreProducts] User location: lat=${userLat}, lng=${userLng}`,
     );
 
+    let nearbySellerIds: mongoose.Types.ObjectId[] = [];
     if (userLat && userLng && !isNaN(userLat) && !isNaN(userLng)) {
-      const nearbySellerIds = await findSellersWithinRange(userLat, userLng);
+      nearbySellerIds = await findSellersWithinRange(userLat, userLng);
       console.log(
         `[getStoreProducts] Found ${nearbySellerIds.length} sellers within range`,
       );
-
-      if (nearbySellerIds.length === 0) {
-        // No sellers within range, return shop data but empty products
-        console.log(
-          `[getStoreProducts] No sellers in range, returning empty products`,
-        );
-        return res.status(200).json({
-          success: true,
-          data: [],
-          shop: shopData,
-          pagination: {
-            page: 1,
-            limit: 50,
-            total: 0,
-            pages: 0,
-          },
-          message:
-            "No sellers available in your area. Please update your location.",
-        });
-      }
-
-      // Filter products by sellers within range
-      query.seller = { $in: nearbySellerIds };
-      console.log(`[getStoreProducts] Added seller filter to query`);
-    } else {
-      // If no location provided, return empty (require location for marketplace)
-      console.log(
-        `[getStoreProducts] No location provided, returning empty products`,
-      );
-      return res.status(200).json({
-        success: true,
-        data: [],
-        shop: shopData,
-        pagination: {
-          page: 1,
-          limit: 50,
-          total: 0,
-          pages: 0,
-        },
-        message:
-          "Location is required to view products. Please enable location access.",
-      });
     }
+    // Do not filter by seller: show all store products and set isAvailable by radius
 
     console.log(
       `[getStoreProducts] Final query:`,
@@ -886,13 +883,21 @@ export const getStoreProducts = async (req: Request, res: Response) => {
 
     const total = await Product.countDocuments(query);
 
+    const sellerIdFrom = (p: any) =>
+      p.seller?._id?.toString() ?? p.seller?.toString() ?? "";
+
     console.log(
       `[getStoreProducts] Found ${total} products matching query, returning ${products.length}`,
     );
 
     return res.status(200).json({
       success: true,
-      data: products.map((p) => ({ ...p, isAvailable: true })),
+      data: products.map((p: any) => ({
+        ...p,
+        isAvailable: nearbySellerIds.some(
+          (id) => id.toString() === sellerIdFrom(p)
+        ),
+      })),
       shop: shopData,
       pagination: {
         page: 1,

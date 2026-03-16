@@ -15,6 +15,8 @@ export interface LocationContextType {
   isLocationLoading: boolean;
   locationError: string | null;
   locationPermissionStatus: 'granted' | 'denied' | 'prompt' | 'session_granted';
+  hasSellersInRange: boolean | null;
+  isServiceAreaLoading: boolean;
   requestLocation: () => Promise<void>;
   updateLocation: (location: Location) => Promise<void>;
   clearLocation: () => void;

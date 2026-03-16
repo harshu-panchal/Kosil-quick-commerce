@@ -7,6 +7,8 @@ interface LocationPermissionRequestProps {
   skipable?: boolean;
   title?: string;
   description?: string;
+  /** When true, modal stays open even if location is already set (e.g. "Change location" from Coming Soon). User can update or re-enter location. */
+  isChangeMode?: boolean;
 }
 
 export default function LocationPermissionRequest({
@@ -14,6 +16,7 @@ export default function LocationPermissionRequest({
   skipable = false,
   title = "Location Access Required",
   description = "We need your location to show you products available near you and enable delivery services.",
+  isChangeMode = false,
 }: LocationPermissionRequestProps) {
   const {
     requestLocation,
@@ -29,15 +32,16 @@ export default function LocationPermissionRequest({
   const [manualLat, setManualLat] = useState(0);
   const [manualLng, setManualLng] = useState(0);
 
-  // Auto-grant if already enabled or session permission exists
+  // Auto-grant if already enabled (only when NOT in change mode – e.g. first-time location request)
   useEffect(() => {
+    if (isChangeMode) return;
     if (isLocationEnabled) {
       console.log(
         "[LocationPermissionRequest] Location is enabled, notifying parent.",
       );
       onLocationGranted();
     }
-  }, [isLocationEnabled, onLocationGranted]);
+  }, [isLocationEnabled, onLocationGranted, isChangeMode]);
 
   const handleAllowLocation = async () => {
     // Clear any previous errors before retrying
@@ -48,13 +52,13 @@ export default function LocationPermissionRequest({
 
     try {
       // ONLY call location API when user explicitly clicks the button
-      // This ensures we don't auto-request location on app load
       await requestLocation();
-      // If requestLocation succeeds, locationError will be cleared in the context
-      // and isLocationEnabled will be set to true, which will trigger onLocationGranted
+      // In change mode, close modal after successful update (effect won't run in change mode)
+      if (isChangeMode) {
+        onLocationGranted();
+      }
     } catch (error) {
       // Error is handled by context and displayed in the error box
-      // Location will remain disabled, modal will stay visible
       // User can retry or use manual location entry
     }
   };
@@ -88,12 +92,13 @@ export default function LocationPermissionRequest({
     }
   };
 
-  if (isLocationEnabled) {
+  // In "required" mode, hide modal once location is set. In "change" mode, always show so user can update location.
+  if (!isChangeMode && isLocationEnabled) {
     return null;
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" aria-modal="true" role="dialog">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
         <div className="text-center mb-6">
           <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
