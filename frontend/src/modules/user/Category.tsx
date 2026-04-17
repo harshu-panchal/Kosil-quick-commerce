@@ -470,7 +470,7 @@ export default function CategoryPage() {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-4">
                 {categoryProducts.map((product) => (
                   <ProductCard
-                    key={product.id}
+                    key={product._id || product.id}
                     product={product}
                     showHeartIcon={false}
                     showStockInfo={false}
