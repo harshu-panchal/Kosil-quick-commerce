@@ -24,6 +24,7 @@ export default function AdminCoupon() {
     couponStatus: "",
     couponMinOrderAmount: "",
     couponValue: "",
+    couponMaxDiscount: "",
     couponType: "Percentage",
     couponDescription: "",
   });
@@ -148,6 +149,9 @@ export default function AdminCoupon() {
             : ("Fixed" as const),
         discountValue: parseFloat(formData.couponValue),
         minimumPurchase: parseFloat(formData.couponMinOrderAmount),
+        maximumDiscount: formData.couponMaxDiscount
+          ? parseFloat(formData.couponMaxDiscount)
+          : undefined,
         startDate: today,
         endDate: formData.couponExpiryDate,
         usageLimit:
@@ -175,6 +179,7 @@ export default function AdminCoupon() {
           couponStatus: "",
           couponMinOrderAmount: "",
           couponValue: "",
+          couponMaxDiscount: "",
           couponType: "Percentage",
           couponDescription: "",
         });
@@ -471,8 +476,7 @@ export default function AdminCoupon() {
 
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Coupon Min Order Amount{" "}
-                  <span className="text-red-500">*</span>
+                  Min Order Amount (₹) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
@@ -483,25 +487,35 @@ export default function AdminCoupon() {
                   min="0"
                   step="0.01"
                   className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
-                  placeholder="Enter min order amount"
+                  placeholder="e.g. 500"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Coupon Value <span className="text-red-500">*</span>
+                  {formData.couponType === "Percentage"
+                    ? "Discount Percentage (%)"
+                    : "Discount Amount (₹)"}{" "}
+                  <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="number"
-                  name="couponValue"
-                  value={formData.couponValue}
-                  onChange={handleInputChange}
-                  required
-                  min="0"
-                  step="0.01"
-                  className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
-                  placeholder="Enter coupon value"
-                />
+                <div className="relative">
+                  <input
+                    type="number"
+                    name="couponValue"
+                    value={formData.couponValue}
+                    onChange={handleInputChange}
+                    required
+                    min="0"
+                    step="0.01"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none pr-8"
+                    placeholder={
+                      formData.couponType === "Percentage" ? "20" : "100"
+                    }
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 font-medium">
+                    {formData.couponType === "Percentage" ? "%" : "₹"}
+                  </div>
+                </div>
               </div>
 
               <div>
@@ -519,6 +533,32 @@ export default function AdminCoupon() {
                 </select>
               </div>
             </div>
+
+            {formData.couponType === "Percentage" && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  Maximum Discount Amount (₹)
+                  <span className="text-xs text-neutral-500 ml-1">
+                    (Optional cap for high-value orders)
+                  </span>
+                </label>
+                <div className="relative max-w-xs">
+                  <input
+                    type="number"
+                    name="couponMaxDiscount"
+                    value={formData.couponMaxDiscount}
+                    onChange={handleInputChange}
+                    min="0"
+                    step="0.01"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none pr-8"
+                    placeholder="e.g. 200"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 font-medium">
+                    ₹
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="mb-4">
               {/* Row 4 */}
@@ -605,6 +645,7 @@ export default function AdminCoupon() {
                       Min Purchase <SortIcon column="minimumPurchase" />
                     </div>
                   </th>
+                  <th className="p-4">Max Discount</th>
                   <th
                     className="p-4 cursor-pointer hover:bg-neutral-100 transition-colors"
                     onClick={() => handleSort("endDate")}>
@@ -668,6 +709,11 @@ export default function AdminCoupon() {
                         {coupon.minimumPurchase
                           ? `₹${coupon.minimumPurchase}`
                           : "N/A"}
+                      </td>
+                      <td className="p-4 align-middle">
+                        {coupon.maximumDiscount
+                          ? `₹${coupon.maximumDiscount}`
+                          : "No Cap"}
                       </td>
                       <td className="p-4 align-middle">
                         {new Date(coupon.endDate).toLocaleDateString()}

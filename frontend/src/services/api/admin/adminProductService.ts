@@ -203,6 +203,8 @@ export interface GetProductsParams {
   seller?: string;
   status?: "Active" | "Inactive" | "Pending" | "Rejected";
   publish?: boolean;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
 }
 
 export interface BulkImportProductsData {

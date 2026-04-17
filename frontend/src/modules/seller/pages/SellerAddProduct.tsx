@@ -331,6 +331,12 @@ export default function SellerAddProduct() {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
+    // Check limit
+    if (galleryImageFiles.length + files.length > 10) {
+      setUploadError("You can only upload up to 10 gallery images.");
+      return;
+    }
+
     // Validate all files
     const invalidFiles = files.filter((file) => !validateImageFile(file).valid);
     if (invalidFiles.length > 0) {
@@ -340,14 +346,14 @@ export default function SellerAddProduct() {
       return;
     }
 
-    setGalleryImageFiles(files);
     setUploadError("");
 
     try {
-      const previews = await Promise.all(
+      const newPreviews = await Promise.all(
         files.map((file) => createImagePreview(file))
       );
-      setGalleryImagePreviews(previews);
+      setGalleryImageFiles((prev) => [...prev, ...files]);
+      setGalleryImagePreviews((prev) => [...prev, ...newPreviews]);
     } catch (error) {
       setUploadError("Failed to create image previews");
     }
@@ -1195,75 +1201,91 @@ export default function SellerAddProduct() {
                 <label className="block text-sm font-medium text-neutral-700 mb-2">
                   Product Gallery Images (Optional)
                 </label>
-                <label className="block border-2 border-dashed border-neutral-300 rounded-lg p-8 text-center hover:border-teal-500 transition-colors cursor-pointer">
-                  {galleryImagePreviews.length > 0 ? (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {galleryImagePreviews.map((preview, index) => (
-                          <div key={index} className="relative">
-                            <img
-                              src={preview}
-                              alt={`Gallery ${index + 1}`}
-                              className="w-full h-32 object-cover rounded-lg"
-                            />
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                removeGalleryImage(index);
-                              }}
-                              className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 hover:bg-red-700">
-                              <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2">
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                              </svg>
-                            </button>
-                          </div>
-                        ))}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {galleryImagePreviews.map((preview, index) => (
+                    <div
+                      key={index}
+                      className="relative group aspect-square rounded-lg overflow-hidden border border-neutral-200">
+                      <img
+                        src={preview}
+                        alt={`Gallery ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            removeGalleryImage(index);
+                          }}
+                          className="bg-red-600 text-white rounded-full p-1.5 hover:bg-red-700 transition-colors shadow-lg">
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                          </svg>
+                        </button>
                       </div>
-                      <p className="text-sm text-neutral-600">
-                        {galleryImageFiles.length} image(s) selected
-                      </p>
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] py-1 text-center font-medium">
+                        Image {index + 1}
+                      </div>
                     </div>
-                  ) : (
-                    <div>
-                      <svg
-                        width="48"
-                        height="48"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="mx-auto mb-2 text-neutral-400">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="17 8 12 3 7 8"></polyline>
-                        <line x1="12" y1="3" x2="12" y2="15"></line>
-                      </svg>
-                      <p className="text-sm text-neutral-600 font-medium">
-                        Upload Other Product Images Here
+                  ))}
+
+                  {/* Add More / Upload Box */}
+                  {galleryImagePreviews.length < 10 && (
+                    <label className="aspect-square border-2 border-dashed border-neutral-300 rounded-lg flex flex-col items-center justify-center hover:border-teal-500 transition-all cursor-pointer bg-neutral-50 hover:bg-teal-50 group">
+                      <div className="w-10 h-10 rounded-full bg-white border border-neutral-200 flex items-center justify-center group-hover:border-teal-200 group-hover:bg-teal-50 transition-all mb-2 shadow-sm">
+                        <svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          className="text-neutral-400 group-hover:text-teal-600 transition-colors">
+                          <line x1="12" y1="5" x2="12" y2="19"></line>
+                          <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                      </div>
+                      <span className="text-xs font-semibold text-neutral-500 group-hover:text-teal-700 transition-colors">
+                        {galleryImagePreviews.length > 0
+                          ? "Add More"
+                          : "Upload Gallery"}
+                      </span>
+                      <p className="text-[10px] text-neutral-400 mt-1">
+                        {galleryImagePreviews.length}/10 selected
                       </p>
-                      <p className="text-xs text-neutral-500 mt-1">
-                        Max 5MB per image, up to 10 images
-                      </p>
-                    </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleGalleryImagesChange}
+                        className="hidden"
+                        disabled={uploading}
+                      />
+                    </label>
                   )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleGalleryImagesChange}
-                    className="hidden"
-                    disabled={uploading}
-                  />
-                </label>
+                </div>
+                <p className="text-xs text-neutral-500 mt-3 flex items-center gap-1">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                  Max 5MB per image. JPG, PNG or WEBP formats supported.
+                </p>
               </div>
             </div>
           </div>

@@ -28,8 +28,8 @@ export default function SellerProductList() {
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(
     new Set()
   );
-  const [sortColumn, setSortColumn] = useState<string | null>(null);
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [sortColumn, setSortColumn] = useState<string | null>("createdAt");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [totalPages, setTotalPages] = useState(1);
   const [paginationInfo, setPaginationInfo] = useState<{
     page: number;

@@ -21,6 +21,7 @@ interface ProductVariation {
   status: "Published" | "Unpublished";
   category: string;
   categoryId: string;
+  createdAt: string;
 }
 
 const STATUS_OPTIONS = ["All Products", "Published", "Unpublished"];
@@ -34,8 +35,8 @@ export default function AdminStockManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortColumn, setSortColumn] = useState<string | null>(null);
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [sortColumn, setSortColumn] = useState<string | null>("createdAt");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,6 +60,8 @@ export default function AdminStockManagement() {
       // Fetch products
       const params: any = {
         limit: 1000, // Fetch all products (increase if you have more than 1000)
+        sortBy: "createdAt",
+        sortOrder: "desc",
       };
 
       if (searchTerm) {
@@ -173,6 +176,7 @@ export default function AdminStockManagement() {
             status: product.publish ? "Published" : "Unpublished",
             category: categoryName,
             categoryId: categoryId,
+            createdAt: product.createdAt || "",
           });
         });
       } else {
@@ -189,6 +193,7 @@ export default function AdminStockManagement() {
           status: product.publish ? "Published" : "Unpublished",
           category: categoryName,
           categoryId: categoryId,
+          createdAt: product.createdAt || "",
         });
       }
     });
@@ -296,6 +301,10 @@ export default function AdminStockManagement() {
         case "status":
           aValue = a.status;
           bValue = b.status;
+          break;
+        case "createdAt":
+          aValue = a.createdAt;
+          bValue = b.createdAt;
           break;
         default:
           return 0;
