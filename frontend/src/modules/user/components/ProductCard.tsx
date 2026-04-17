@@ -119,7 +119,12 @@ export default function ProductCard({
     }
   };
 
-  const cartItem = cart.items.find((item) => item?.product && (item.product.id === (product as any).id || item.product._id === (product as any).id || item.product.id === product._id));
+  const cartItem = cart.items.find((item) => {
+    if (!item?.product) return false;
+    const itemProductId = item.product.id || item.product._id;
+    const targetProductId = (product as any).id || product._id;
+    return itemProductId && targetProductId && itemProductId === targetProductId;
+  });
   const inCartQty = cartItem?.quantity || 0;
 
   // Get Price and MRP using utility

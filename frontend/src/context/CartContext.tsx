@@ -45,8 +45,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Filter out items with null/undefined products (corrupted localStorage data)
-        return Array.isArray(parsed) ? parsed.filter((item: any) => item?.product) : [];
+        // Filter and normalize items (ensure id is present from _id)
+        return Array.isArray(parsed) ? parsed
+          .filter((item: any) => item?.product)
+          .map((item: any) => ({
+            ...item,
+            product: {
+              ...item.product,
+              id: item.product.id || item.product._id
+            }
+          })) : [];
       } catch (e) {
         console.error("Failed to parse saved cart", e);
       }
