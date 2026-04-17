@@ -91,11 +91,11 @@ export default function AdminHomeSection() {
         }
     }, [editingId, displayType, pageLocation, selectedCategories, categories, selectedHeaderCategory]);
 
-    // Fetch subcategories when category changes (only for subcategories display type)
+    // Fetch subcategories when category changes (for both subcategories and products display types)
     useEffect(() => {
-        if (displayType === "subcategories" && selectedCategories.length > 0) {
+        if (displayType !== "categories" && selectedCategories.length > 0) {
             fetchSubCategories(selectedCategories);
-        } else {
+        } else if (displayType === "categories" || selectedCategories.length === 0) {
             setSubCategories([]);
             setSelectedSubCategories([]);
         }
